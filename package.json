@@ -1,0 +1,29 @@
+{
+  "name": "@data-fair/processing-export-file",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --exit",
+    "lint": "eslint --ignore-path .gitignore .",
+    "lint-fix": "eslint --ignore-path .gitignore --fix ."
+  },
+  "author": "",
+  "license": "MIT",
+  "keywords": [
+    "data-fair-processings-plugin"
+  ],
+  "devDependencies": {
+    "@data-fair/processings-test-utils": "^0.4.0",
+    "config": "^3.3.6",
+    "eslint": "^7.18.0",
+    "mocha": "^10.2.0",
+    "standard": "^16.0.3"
+  },
+  "dependencies": {
+    "csv": "^6.0.5",
+    "form-data": "^4.0.0",
+    "fs-extra": "^9.1.0",
+    "pump": "^3.0.0"
+  }
+}
