@@ -50,7 +50,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
 
   await pump(
     readableStream,
-    csv.stringify({ header: true, quoted_string: true }),
+    csv.stringify({ header: true, quoted_string: true, columns: processingConfig.fields }),
     writeStream
   )
 

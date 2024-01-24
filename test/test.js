@@ -28,8 +28,8 @@ describe('Hello world processing', () => {
         fields: [
           'daterefere',
           'route',
-          'pr',
           'deppr',
+          'pr',
           '_geopoint'
         ],
         label: 'Mon export',
