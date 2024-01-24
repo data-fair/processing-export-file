@@ -59,7 +59,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   await log.info('Chargement de la pièce jointe terminé')
   await log.info('Mise à jour des métadonnées')
 
-  const attachments = (await axios(processingConfig.dataset.href + '?select=attachments')).data.attachments
+  const attachments = (await axios(processingConfig.dataset.href + '?select=attachments')).data.attachments || []
   const idx = attachments.findIndex(a => a.name === filename)
   if (idx >= 0) attachments.splice(idx, 1)
   await axios({
