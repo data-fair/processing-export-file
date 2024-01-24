@@ -29,19 +29,19 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
     yield * makeRequest(url)
   }
 
-  async function * depaginate () {
-    let url = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.join(',')
-    if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) url += `&qs=${processingConfig.filter.field}:${processingConfig.filter.value}`
-    const pages = dataPages(url)
-
-    for await (const page of pages) {
+  async function * depaginate (url) {
+    for await (const page of dataPages(url)) {
       for (const line of page) {
+        delete line._score
         yield line
       }
     }
   }
 
-  const readableStream = Stream.Readable.from(depaginate(), { objectMode: true })
+  let url = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.join(',')
+  if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) url += `&qs=${processingConfig.filter.field}:${processingConfig.filter.value}`
+
+  const readableStream = Stream.Readable.from(depaginate(url), { objectMode: true })
   const filePath = path.join(tmpDir, processingConfig.filename + '.csv')
   const writeStream = fs.createWriteStream(filePath, { flags: 'w' })
 
