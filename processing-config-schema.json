@@ -25,7 +25,7 @@
       "fields": {
         "type": "array",
         "title": "Colonnes du jeu de données",
-        "x-fromUrl": "{dataset.href}/schema",
+        "x-fromUrl": "{parent.parent.value.dataset.href}/schema",
         "x-itemTitle": "label",
         "x-itemKey": "key",
         "items": {
@@ -50,7 +50,7 @@
           "field": {
             "type": "string", 
             "title": "Code colonne",
-            "x-fromUrl": "{dataset.href}/schema",
+            "x-fromUrl": "{parent.parent.value.dataset.href}/schema",
             "x-itemTitle": "label",
             "x-itemKey": "key",
             "items": {
@@ -60,7 +60,7 @@
           "value": {
             "type": "string", 
             "title": "Valeur",
-            "x-fromUrl": "{dataset.href}/values/{parent.value.column}?q={q}&q_mode=complete&size=100&stringify=true"
+            "x-fromUrl": "{parent.parent.value.dataset.href}/values/{parent.value.field}?q={q}&q_mode=complete&size=100&stringify=true"
           }
         }
       }
