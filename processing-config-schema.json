@@ -1,7 +1,7 @@
 {
   "type": "object",
   "x-display": "tabs",
-  "required": ["datasetMode"],
+  "required": ["dataset", "fields", "label", "filename"],
   "allOf": [{
     "title": "Jeu de données",
     "properties": {
@@ -21,7 +21,6 @@
     }
   }, {
     "title": "Paramètres",
-    "required": ["fields", "label", "filename"],
     "properties": {
       "fields": {
         "type": "array",
@@ -31,7 +30,8 @@
         "x-itemKey": "key",
         "items": {
           "type": "string"
-        }
+        },
+         "default": []
       },
       "filename": {
         "type": "string", 
