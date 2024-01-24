@@ -28,7 +28,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
     writeStream
   )
 
-  let next = processingConfig.dataset.href + '/lines?size=1000&select=' + processingConfig.fields.join(',')
+  let next = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.join(',')
   if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) next += `&qs=${processingConfig.filter.field}:${processingConfig.filter.value}`
   do {
     const response = (await axios(next)).data
