@@ -3,7 +3,7 @@ const path = require('path')
 const FormData = require('form-data')
 const util = require('util')
 const Stream = require('stream')
-const pump = require('pump')
+const pump = require('util').promisify(require('pump'))
 const csv = require('csv')
 
 function displayBytes (aSize) {
@@ -17,29 +17,38 @@ function displayBytes (aSize) {
 
 // main execution method
 exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
-  const readableStream = new Stream.Readable({ objectMode: true })
-  readableStream._read = () => {}
+  async function * dataPages (url) {
+    async function * makeRequest (_url) {
+      const response = (await axios(_url)).data
+      await log.info(response.results.length + ' lignes récupérées')
+      yield response.results
+      if (response.next) {
+        yield * makeRequest(response.next)
+      }
+    }
+    yield * makeRequest(url)
+  }
+
+  async function * depaginate () {
+    const url = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.join(',')
+    const pages = dataPages(url)
+
+    for await (const page of pages) {
+      for (const line of page) {
+        yield line
+      }
+    }
+  }
+
+  const readableStream = Stream.Readable.from(depaginate(), { objectMode: true })
   const filePath = path.join(tmpDir, processingConfig.filename + '.csv')
   const writeStream = fs.createWriteStream(filePath, { flags: 'w' })
 
-  pump(
+  await pump(
     readableStream,
     csv.stringify({ header: true, quoted_string: true }),
     writeStream
   )
-
-  let next = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.join(',')
-  if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) next += `&qs=${processingConfig.filter.field}:${processingConfig.filter.value}`
-  do {
-    const response = (await axios(next)).data
-    await log.info(response.results.length + ' lignes récupérées')
-    for (const result of response.results) {
-      delete result._score
-      readableStream.push(result)
-    }
-    next = response.next
-  } while (next)
-  readableStream.destroy()
 
   const filename = path.parse(filePath).base
   const formData = new FormData()
