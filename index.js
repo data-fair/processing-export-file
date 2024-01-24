@@ -39,7 +39,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
     }
     next = response.next
   } while (next)
-  readableStream.push()
+  readableStream.destroy()
 
   const filename = path.parse(filePath).base
   const formData = new FormData()
