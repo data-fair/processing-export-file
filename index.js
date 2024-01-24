@@ -30,7 +30,8 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   }
 
   async function * depaginate () {
-    const url = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.join(',')
+    let url = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.join(',')
+    if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) url += `&qs=${processingConfig.filter.field}:${processingConfig.filter.value}`
     const pages = dataPages(url)
 
     for await (const page of pages) {
