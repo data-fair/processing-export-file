@@ -33,6 +33,9 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
     for await (const page of dataPages(url)) {
       for (const line of page) {
         delete line._score
+        for (const field of processingConfig.fields) {
+          if (line[field] == null) line[field] = undefined
+        }
         yield line
       }
     }
