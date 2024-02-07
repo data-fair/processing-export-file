@@ -1,7 +1,7 @@
 {
   "name": "@data-fair/processing-export-file",
   "version": "0.1.10",
-  "description": "",
+  "description": "Export data into a csv file and attach it on metadata",
   "main": "index.js",
   "scripts": {
     "test": "mocha --exit",
@@ -14,11 +14,15 @@
     "data-fair-processings-plugin"
   ],
   "devDependencies": {
-    "@data-fair/processings-test-utils": "^0.4.0",
+    "@data-fair/lib": "^0.21.0",
+    "axios": "^1.6.7",
     "config": "^3.3.6",
+    "dayjs": "^1.11.10",
+    "draftlog": "^1.0.13",
     "eslint": "^7.18.0",
     "mocha": "^10.2.0",
-    "standard": "^16.0.3"
+    "standard": "^16.0.3",
+    "ws": "^8.16.0"
   },
   "dependencies": {
     "csv": "^6.0.5",

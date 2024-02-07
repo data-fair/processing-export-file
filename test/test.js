@@ -2,7 +2,6 @@ process.env.NODE_ENV = 'test'
 const config = require('config')
 const assert = require('assert').strict
 const exportFile = require('../')
-const testUtils = require('@data-fair/processings-test-utils')
 
 describe('Hello world processing', () => {
   it('should expose a plugin config schema for super admins', async () => {
@@ -17,20 +16,19 @@ describe('Hello world processing', () => {
   it('should run a task', async function () {
     this.timeout(1000000)
 
-    const context = testUtils.context({
+    const testsUtils = await import('@data-fair/lib/processings/tests-utils.js')
+    const context = testsUtils.context({
       pluginConfig: {},
       processingConfig: {
         dataset: {
-          title: 'gares peage 2023 shp',
-          id: '3oe9erji6z9r6bwg6tcldyu8',
-          href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/3oe9erji6z9r6bwg6tcldyu8'
+          title: 'prenoms-test',
+          id: 'hl4q7qtv2ahuqtbobh65mlzx',
+          href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/hl4q7qtv2ahuqtbobh65mlzx'
         },
         fields: [
-          'daterefere',
-          'route',
-          'deppr',
-          'pr',
-          '_geopoint'
+          'sexe',
+          'preusuel',
+          'nombre'
         ],
         label: 'Mon export',
         filename: 'my-export'
