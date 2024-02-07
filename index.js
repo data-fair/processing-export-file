@@ -29,7 +29,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
         }
       } catch (error) {
         if (retries > 0) {
-          await log.warn(`La requête a échoué. Tentatives restantes : ${retries}`)
+          await log.warning(`La requête a échoué. Tentatives restantes : ${retries}`)
           await new Promise(resolve => setTimeout(resolve, 1000))
           yield * makeRequest(_url, retries - 1)
         } else {
