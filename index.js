@@ -18,12 +18,24 @@ function displayBytes (aSize) {
 // main execution method
 exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   async function * dataPages (url) {
-    async function * makeRequest (_url) {
-      const response = (await axios(_url)).data
-      await log.info(response.results.length + ' lignes récupérées')
-      yield response.results
-      if (response.next) {
-        yield * makeRequest(response.next)
+    async function * makeRequest (_url, retries = 3) {
+      try {
+        const response = await axios(_url)
+        const data = response.data
+        await log.info(data.results.length + ' lignes récupérées')
+        yield data.results
+        if (data.next) {
+          yield * makeRequest(data.next)
+        }
+      } catch (error) {
+        if (retries > 0) {
+          await log.warn(`La requête a échoué. Tentatives restantes : ${retries}`)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          yield * makeRequest(_url, retries - 1)
+        } else {
+          await log.error('Échec de la requête après plusieurs tentatives. Abandon.')
+          throw error
+        }
       }
     }
     yield * makeRequest(url)
@@ -45,6 +57,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) url += `&qs=${processingConfig.filter.field}:${processingConfig.filter.value}`
 
   const readableStream = Stream.Readable.from(depaginate(url), { objectMode: true })
+  await fs.ensureDir(tmpDir)
   const filePath = path.join(tmpDir, processingConfig.filename + '.csv')
   const writeStream = fs.createWriteStream(filePath, { flags: 'w' })
 
