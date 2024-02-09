@@ -8,11 +8,11 @@ describe('Hello world processing', () => {
     const schema = require('../plugin-config-schema.json')
     assert.ok(schema)
   })
-
   it('should expose a processing config schema for users', async () => {
     const schema = require('../processing-config-schema.json')
     assert.equal(schema.type, 'object')
   })
+
   it('should run a task', async function () {
     this.timeout(1000000)
 
@@ -21,16 +21,38 @@ describe('Hello world processing', () => {
       pluginConfig: {},
       processingConfig: {
         dataset: {
-          title: 'prenoms-test',
-          id: 'hl4q7qtv2ahuqtbobh65mlzx',
-          href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/hl4q7qtv2ahuqtbobh65mlzx'
+          title: 'RNIC test',
+          id: 'prnt0u0rhqjlkrd1wrnyozeu', // RNIC issu du test de transform-csv
+          href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/prnt0u0rhqjlkrd1wrnyozeu'
         },
+        format: ['csv', 'parquet', 'xlsx'],
         fields: [
-          'sexe',
-          'preusuel',
-          'nombre'
+          {
+            key: 'nom_copropriete',
+            type: 'string'
+          },
+          {
+            key: 'latitude',
+            type: 'number'
+          },
+          {
+            key: 'longitude',
+            type: 'number'
+          },
+          {
+            key: 'nb_lots_habitation',
+            type: 'integer'
+          },
+          {
+            key: 'syndicat_cooperatif',
+            type: 'boolean'
+          },
+          {
+            key: 'parcelles',
+            type: 'string'
+          }
         ],
-        label: 'Mon export',
+        label: 'Mon export test',
         filename: 'my-export'
       },
       tmpDir: 'data/'

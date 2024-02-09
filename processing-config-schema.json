@@ -29,9 +29,29 @@
         "x-itemTitle": "label",
         "x-itemKey": "key",
         "items": {
-          "type": "string"
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "title": "Colonne"
+            },
+            "type": {
+              "type": "string",
+              "title": "type"
+            }
+          }
         },
-         "default": []
+        "default": []
+      },
+      "format": {
+        "type": "array",
+        "title": "Format de sortie des fichiers",
+        "description": "Selectionner plusieurs format pour générer plusieurs fichiers",
+        "items": {
+          "type": "string",
+          "enum": ["csv", "parquet", "xlsx"]
+        },
+        "default": ["csv"]
       },
       "filename": {
         "type": "string", 
@@ -41,7 +61,7 @@
       "label": {
         "type": "string", 
         "title": "Libellé de la pièce jointe",
-        "default": "Export CSV"
+        "default": "Export"
       },
       "filter": {
         "type": "object",
