@@ -3,7 +3,9 @@ const path = require('path')
 const FormData = require('form-data')
 const util = require('util')
 const Stream = require('stream')
-const { ReadableStreamClone } = require('readable-stream-clone')
+// const { ReadableStreamClone } = require('readable-stream-clone')
+const cloneable = require('cloneable-readable')
+
 const pump = require('util').promisify(require('pump'))
 const { ParquetSchema, ParquetTransformer } = require('@dsnp/parquetjs')
 const csv = require('csv')
@@ -97,18 +99,18 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   let url = processingConfig.dataset.href + '/lines?size=10000&select=' + processingConfig.fields.map(field => field.key).join(',')
   if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) url += `&qs=${processingConfig.filter.field}:${processingConfig.filter.value}`
 
-  const readableStream = Stream.Readable.from(depaginate(url), { objectMode: true })
+  const readableStream = cloneable(Stream.Readable.from(depaginate(url), { objectMode: true }))
   await fs.ensureDir(tmpDir)
   const promises = []
 
   if (processingConfig.format.includes('csv')) {
     const csvPromise = (async () => {
       const filePathCsv = path.join(tmpDir, processingConfig.filename + '.csv')
-      const readableStreamCsv = new ReadableStreamClone(readableStream, { objectMode: true })
+      // const readableStreamCsv = new ReadableStreamClone(readableStream, { objectMode: true })
       const writeStreamCsv = fs.createWriteStream(filePathCsv, { flags: 'w' })
 
       await pump(
-        readableStreamCsv,
+        processingConfig.format.length > 1 ? readableStream.clone() : readableStream,
         csv.stringify({ header: true, quoted_string: true, columns: processingConfig.fields.map(field => field.key), cast: { boolean: value => value ? '1' : '0' } }),
         writeStreamCsv
       )
@@ -122,7 +124,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   if (processingConfig.format.includes('parquet')) {
     const parquetPromise = (async () => {
       const filePathParquet = path.join(tmpDir, processingConfig.filename + '.parquet')
-      const readableStreamParquet = new ReadableStreamClone(readableStream, { objectMode: true })
+      // const readableStreamParquet = new ReadableStreamClone(readableStream, { objectMode: true })
       const writeStreamParquet = fs.createWriteStream(filePathParquet, { flags: 'w' })
 
       const typeConversion = {
@@ -139,7 +141,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
       const schema = new ParquetSchema(schemaDefinition)
 
       await pump(
-        readableStreamParquet,
+        processingConfig.format.includes('xlsx') ? readableStream.clone() : readableStream,
         new ParquetTransformer(schema),
         writeStreamParquet
       )
@@ -153,7 +155,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   if (processingConfig.format.includes('xlsx')) {
     const xlsxPromise = (async () => {
       const filePathXlsx = path.join(tmpDir, processingConfig.filename + '.xlsx')
-      const readableStreamXlsx = new ReadableStreamClone(readableStream, { objectMode: true })
+      // const readableStreamXlsx = new ReadableStreamClone(readableStream, { objectMode: true })
       const writeStreamXlsx = fs.createWriteStream(filePathXlsx, { flags: 'w' })
 
       const workbook = new Excel.stream.xlsx.WorkbookWriter({ stream: writeStreamXlsx })
@@ -163,11 +165,11 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
       worksheet.columns = columns
 
       await pump(
-        readableStreamXlsx,
+        readableStream,
         new Stream.Transform({
           objectMode: true,
           transform (line, _, next) {
-            worksheet.addRow(line)
+            worksheet.addRow(line).commit()
             next()
           }
         })
