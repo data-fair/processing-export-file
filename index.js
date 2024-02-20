@@ -170,7 +170,8 @@ async function upload (filePath, processingConfig, axios, log) {
   const contentLength = await getLengthAsync()
 
   const { formatBytes } = await import('@data-fair/lib/format/bytes.js')
-  await log.info(`Chargement de la pièce jointe ${filename}, taille : (${formatBytes(contentLength)})`)
+  const task = `Chargement de la pièce jointe ${filename} (${formatBytes(contentLength)})`
+  await log.task(task)
 
   const response = await axios({
     method: 'post',
@@ -178,9 +179,12 @@ async function upload (filePath, processingConfig, axios, log) {
     data: formData,
     maxContentLength: Infinity,
     maxBodyLength: Infinity,
-    headers: { ...formData.getHeaders(), 'content-length': contentLength }
+    headers: { ...formData.getHeaders(), 'content-length': contentLength },
+    onUploadProgress: progressEvent => {
+      log.progress(task, progressEvent.loaded, progressEvent.total)
+    }
   })
-  await log.info('Chargement de la pièce jointe terminé')
+
   await log.info('Mise à jour des métadonnées')
 
   const attachments = (await axios(processingConfig.dataset.href + '?select=attachments')).data.attachments || []
