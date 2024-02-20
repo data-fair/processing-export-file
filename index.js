@@ -136,6 +136,7 @@ async function fetchAndWriteData (processingConfig, axios, log, writeStreams) {
   let count = 0
 
   while (url) {
+    if (stopped) return
     const data = await fetchData(url, axios, log)
     url = data.next
     for (const line of data.results) {
@@ -241,10 +242,11 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   if (stopped) return
   await log.step('Chargement des pièces jointes')
   for (const filePath of filePaths) {
+    if (stopped) return
     await upload(filePath, processingConfig, axios, log)
   }
 }
 
-exports.stop = () => {
+exports.stop = async () => {
   stopped = true
 }
