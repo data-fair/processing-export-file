@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha --exit",
     "lint": "eslint --ignore-path .gitignore .",
-    "lint-fix": "eslint --ignore-path .gitignore --fix ."
+    "lint-fix": "eslint --ignore-path .gitignore --fix .",
+    "check-types": "tsc"
   },
   "author": "",
   "license": "MIT",
@@ -15,6 +16,8 @@
   ],
   "devDependencies": {
     "@data-fair/lib": "^0.21.0",
+    "@types/config": "^3.3.3",
+    "@types/mocha": "^10.0.6",
     "axios": "^1.6.7",
     "config": "^3.3.6",
     "dayjs": "^1.11.10",
@@ -22,15 +25,13 @@
     "eslint": "^7.18.0",
     "mocha": "^10.2.0",
     "standard": "^16.0.3",
+    "typescript": "^5.3.3",
     "ws": "^8.16.0"
   },
   "dependencies": {
     "@dsnp/parquetjs": "^1.5.0",
-    "cloneable-readable": "^3.0.0",
-    "csv": "^6.0.5",
+    "csv-stringify": "^6.4.5",
     "exceljs": "^4.4.0",
-    "form-data": "^4.0.0",
-    "fs-extra": "^9.1.0",
-    "pump": "^3.0.0"
+    "form-data": "^4.0.0"
   }
 }

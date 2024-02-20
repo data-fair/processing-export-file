@@ -1,4 +1,6 @@
 process.env.NODE_ENV = 'test'
+
+/** @type {any} */
 const config = require('config')
 const assert = require('assert').strict
 const exportFile = require('../')
@@ -14,6 +16,7 @@ describe('Hello world processing', () => {
   })
 
   it('should run a task', async function () {
+    // @ts-ignore
     this.timeout(1000000)
 
     const testsUtils = await import('@data-fair/lib/processings/tests-utils.js')
@@ -56,7 +59,7 @@ describe('Hello world processing', () => {
         filename: 'my-export'
       },
       tmpDir: 'data/'
-    }, config, false)
+    }, config, false, false)
     await exportFile.run(context)
   })
 })
