@@ -104,9 +104,9 @@ async function fetchData (url, axios, log) {
       return data
     } catch (_error) {
       error = _error
-      await log.warning(`La requête a échoué. Tentatives restantes : ${maxRetries - retries}`)
-      await new Promise(resolve => setTimeout(resolve, 1000))
       retries++
+      await log.warning(`La requête a échoué. Tentatives restantes : ${maxRetries - retries}.`)
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
   }
   await log.error('Échec de la requête après plusieurs tentatives. Abandon.')
