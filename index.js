@@ -4,6 +4,7 @@ const { Writable } = require('node:stream')
 const { pipeline, finished } = require('node:stream/promises')
 const util = require('node:util')
 const FormData = require('form-data')
+const exec = require('./lib/exec')
 
 let stopped = false
 
@@ -14,13 +15,14 @@ let stopped = false
  */
 function getCSVStreamPipeline (filePath, processingConfig) {
   const csv = require('csv-stringify')
+  const params = {
+    header: true,
+    quoted_string: true,
+    cast: { boolean: value => value ? '1' : '0' }
+  }
+  if (processingConfig.fields.length) params.columns = processingConfig.fields.map((/** @type {{key: string}} */field) => field.key)
   return [
-    csv.stringify({
-      header: true,
-      quoted_string: true,
-      columns: processingConfig.fields.map((/** @type {{key: string}} */field) => field.key),
-      cast: { boolean: value => value ? '1' : '0' }
-    }),
+    csv.stringify(params),
     fs.createWriteStream(filePath, { flags: 'w' })
   ]
 }
@@ -87,32 +89,6 @@ function getXlsxStreamPipeline (filePath, processingConfig) {
   return [writableXlsx]
 }
 
-const maxRetries = 3
-/**
- * @param {string} url
- * @param {import('axios').AxiosInstance} axios
- * @param {any} log
- * @returns {Promise<{results: any[], next?: string, total: number}>}
- */
-async function fetchData (url, axios, log) {
-  let retries = 0
-  let error
-  while (retries < maxRetries) {
-    try {
-      const response = await axios(url)
-      const data = response.data
-      return data
-    } catch (_error) {
-      error = _error
-      retries++
-      await log.warning(`La requête a échoué. Tentatives restantes : ${maxRetries - retries}.`)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
-  }
-  await log.error('Échec de la requête après plusieurs tentatives. Abandon.')
-  throw error
-}
-
 const dataSize = 10000
 /**
  * @param {any} processingConfig
@@ -124,7 +100,9 @@ const dataSize = 10000
 async function fetchAndWriteData (processingConfig, axios, log, writeStreams) {
   const urlObj = new URL(processingConfig.dataset.href + '/lines')
   urlObj.searchParams.set('size', dataSize.toString())
-  urlObj.searchParams.set('select', processingConfig.fields.map((/** @type {{key: string}} */field) => field.key).join(','))
+  if (processingConfig.fields.length) {
+    urlObj.searchParams.set('select', processingConfig.fields.map((/** @type {{key: string}} */field) => field.key).join(','))
+  }
   if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) {
     urlObj.searchParams.set('qs', `${processingConfig.filter.field}:${processingConfig.filter.value}`)
   }
@@ -137,12 +115,23 @@ async function fetchAndWriteData (processingConfig, axios, log, writeStreams) {
 
   while (url) {
     if (stopped) return
-    const data = await fetchData(url, axios, log)
+    const { data } = await axios(url)
     url = data.next
     for (const line of data.results) {
       delete line._score
       for (const field of processingConfig.fields) {
         if (line[field.key] === null) line[field.key] = undefined
+      }
+      if (line._geopoint) {
+        const [lat, lon] = line._geopoint.split(',')
+        line.latitude = lat
+        line.longitude = lon
+      }
+      if (line['_geoshape.coordinates']) {
+        line._geoshape = JSON.stringify({
+          coordinates: line['_geoshape.coordinates'],
+          type: line['_geoshape.type']
+        })
       }
       for (const writeStream of writeStreams) {
         // writing to the stream without piping but while still respecting backpressure
@@ -150,7 +139,6 @@ async function fetchAndWriteData (processingConfig, axios, log, writeStreams) {
         if (!keepWriting) await new Promise(resolve => writeStream.once('drain', resolve))
       }
     }
-
     count += data.results.length
     await log.progress('Téléchargement des données', count, data.total)
   }
@@ -163,7 +151,7 @@ async function fetchAndWriteData (processingConfig, axios, log, writeStreams) {
  * @param {import('axios').AxiosInstance} axios
  * @param {any} log
  */
-async function upload (filePath, processingConfig, axios, log) {
+async function upload (filePath, dataset, processingConfig, axios, log) {
   const filename = path.parse(filePath).base
   const formData = new FormData()
   formData.append('attachment', fs.createReadStream(filePath), { filename })
@@ -188,7 +176,7 @@ async function upload (filePath, processingConfig, axios, log) {
 
   await log.info('Mise à jour des métadonnées')
 
-  const attachments = (await axios(processingConfig.dataset.href + '?select=attachments')).data.attachments || []
+  const attachments = dataset.attachments || []
   const idx = attachments.findIndex((/** @type {{name: string}} */a) => a.name === filename)
   if (idx >= 0) attachments.splice(idx, 1)
   await axios({
@@ -212,15 +200,14 @@ async function upload (filePath, processingConfig, axios, log) {
  */
 exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   await log.step('Récupération des données')
-
   /** @type {import('node:stream').Writable[][]} */
   const streamPipelines = []
   /** @type {string[]} */
   const filePaths = []
-  if (processingConfig.format.includes('csv')) {
+  if (processingConfig.format.includes('csv') || processingConfig.format.includes('pmtiles')) {
     const filePathCsv = path.join(tmpDir, processingConfig.filename + '.csv')
     streamPipelines.push(getCSVStreamPipeline(filePathCsv, processingConfig))
-    filePaths.push(filePathCsv)
+    if (processingConfig.format.includes('csv')) filePaths.push(filePathCsv)
   }
   if (processingConfig.format.includes('parquet')) {
     const filePathParquet = path.join(tmpDir, processingConfig.filename + '.parquet')
@@ -238,12 +225,57 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   })
   promises.push(fetchAndWriteData(processingConfig, axios, log, streamPipelines.map(streams => streams[0])))
   await Promise.all(promises)
+  const dataset = (await axios(processingConfig.dataset.href)).data
+
+  if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
+    if (!dataset.bbox) {
+      await log.error('Le jeu de données n\'est pas géographique et ne peut pas être converti')
+      return
+    }
+    const filePathCsv = path.join(tmpDir, processingConfig.filename + '.csv')
+    const filePathGeojson = path.join(tmpDir, processingConfig.filename + '.geojson')
+    if (processingConfig.format.includes('geojson')) {
+      filePaths.push(filePathGeojson)
+    }
+    const ogr2ogrOptions = ['-f', 'GEOJSON', filePathGeojson, filePathCsv, '-a_srs', 'EPSG:4326']
+    const geomField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'geometry') || f.key === '_geoshape')
+    const latField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latitude') || f.key === 'latitude')
+    const lonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'longitude') || f.key === 'longitude')
+    if (geomField) {
+      ogr2ogrOptions.push('-oo')
+      ogr2ogrOptions.push(`GEOM_POSSIBLE_NAMES=${geomField.key}`)
+    } else if (latField && lonField) {
+      ogr2ogrOptions.push('-oo')
+      ogr2ogrOptions.push(`X_POSSIBLE_NAMES=${lonField.key}`)
+      ogr2ogrOptions.push('-oo')
+      ogr2ogrOptions.push(`Y_POSSIBLE_NAMES=${latField.key}`)
+    } else {
+      await log.error('Les concepts nécessaires n\'ont pas été trouvés')
+      return
+    }
+    await exec('ogr2ogr', ogr2ogrOptions)
+    if (processingConfig.format.includes('pmtiles')) {
+      const filePathPmtiles = path.join(tmpDir, processingConfig.filename + '.pmtiles')
+      await exec('tippecanoe', ['-zg', '--projection=EPSG:4326', '--force', '--drop-densest-as-needed', '-o', filePathPmtiles, '-l', 'default', filePathGeojson])
+      filePaths.push(filePathPmtiles)
+    }
+    if (processingConfig.format.includes('shz')) {
+      const filePathShz = path.join(tmpDir, processingConfig.filename + '.shz')
+      await exec('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', filePathShz, filePathGeojson])
+      filePaths.push(filePathShz)
+    }
+    if (processingConfig.format.includes('gpkg')) {
+      const filePathGpkg = path.join(tmpDir, processingConfig.filename + '.gpkg')
+      await exec('ogr2ogr', ['-f', 'GPKG', '-skipfailures', filePathGpkg, filePathGeojson])
+      filePaths.push(filePathGpkg)
+    }
+  }
 
   if (stopped) return
   await log.step('Chargement des pièces jointes')
   for (const filePath of filePaths) {
     if (stopped) return
-    await upload(filePath, processingConfig, axios, log)
+    await upload(filePath, dataset, processingConfig, axios, log)
   }
 }
 

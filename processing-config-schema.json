@@ -2,88 +2,99 @@
   "type": "object",
   "x-display": "tabs",
   "required": ["dataset", "fields", "label", "filename"],
-  "allOf": [{
-    "title": "Jeu de données",
-    "properties": {
-      "dataset": {
-        "type": "object",
-        "title": "Jeu de donnée existant",
-        "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-        "x-itemsProp": "results",
-        "x-itemTitle": "title",
-        "x-itemKey": "id",
-        "properties": {
-          "id": {"type": "string", "title": "Identifiant"},
-          "href": { "type": "string", "title": "url" },
-          "title": {"type": "string", "title": "Titre"}
+  "allOf": [
+    {
+      "title": "Jeu de données",
+      "properties": {
+        "dataset": {
+          "type": "object",
+          "title": "Jeu de donnée existant",
+          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+          "x-itemsProp": "results",
+          "x-itemTitle": "title",
+          "x-itemKey": "id",
+          "properties": {
+            "id": { "type": "string", "title": "Identifiant" },
+            "href": { "type": "string", "title": "url" },
+            "title": { "type": "string", "title": "Titre" }
+          }
         }
       }
-    }
-  }, {
-    "title": "Paramètres",
-    "properties": {
-      "fields": {
-        "type": "array",
-        "title": "Colonnes du jeu de données",
-        "x-fromUrl": "{parent.parent.value.dataset.href}/schema",
-        "x-itemTitle": "label",
-        "x-itemKey": "key",
-        "items": {
-          "type": "object",
-          "properties": {
-            "key": {
-              "type": "string",
-              "title": "Colonne"
-            },
-            "type": {
-              "type": "string",
-              "title": "type"
-            }
-          }
-        },
-        "default": []
-      },
-      "format": {
-        "type": "array",
-        "title": "Format de sortie des fichiers",
-        "description": "Selectionner plusieurs format pour générer plusieurs fichiers",
-        "items": {
-          "type": "string",
-          "enum": ["csv", "parquet", "xlsx"]
-        },
-        "default": ["csv"]
-      },
-      "filename": {
-        "type": "string", 
-        "title": "Nom du fichier (sans l'extension)",
-        "default": "export"
-      },
-      "label": {
-        "type": "string", 
-        "title": "Libellé de la pièce jointe",
-        "default": "Export"
-      },
-      "filter": {
-        "type": "object",
-        "title": "Filtrer les lignes",
-        "properties": {
-          "field": {
-            "type": "string", 
-            "title": "Code colonne",
-            "x-fromUrl": "{parent.parent.parent.value.dataset.href}/schema",
-            "x-itemTitle": "label",
-            "x-itemKey": "key",
-            "items": {
-              "type": "string"
+    },
+    {
+      "title": "Paramètres",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "title": "Colonnes du jeu de données",
+          "x-fromUrl": "{parent.parent.value.dataset.href}/schema",
+          "x-itemTitle": "label",
+          "x-itemKey": "key",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "title": "Colonne"
+              },
+              "type": {
+                "type": "string",
+                "title": "type"
+              }
             }
           },
-          "value": {
-            "type": "string", 
-            "title": "Valeur",
-            "x-fromUrl": "{parent.parent.parent.value.dataset.href}/values/{parent.value.field}?q={q}&q_mode=complete&size=100&stringify=true"
+          "default": []
+        },
+        "format": {
+          "type": "array",
+          "title": "Format de sortie des fichiers",
+          "description": "Selectionner plusieurs format pour générer plusieurs fichiers",
+          "items": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "parquet",
+              "xlsx",
+              "geojson",
+              "pmtiles",
+              "shz",
+              "gpkg"
+            ]
+          },
+          "default": ["csv"]
+        },
+        "filename": {
+          "type": "string",
+          "title": "Nom du fichier (sans l'extension)",
+          "default": "export"
+        },
+        "label": {
+          "type": "string",
+          "title": "Libellé de la pièce jointe",
+          "default": "Export"
+        },
+        "filter": {
+          "type": "object",
+          "title": "Filtrer les lignes",
+          "properties": {
+            "field": {
+              "type": "string",
+              "title": "Code colonne",
+              "x-fromUrl": "{parent.parent.parent.value.dataset.href}/schema",
+              "x-itemTitle": "label",
+              "x-itemKey": "key",
+              "items": {
+                "type": "string"
+              }
+            },
+            "value": {
+              "type": "string",
+              "title": "Valeur",
+              "x-fromUrl": "{parent.parent.parent.value.dataset.href}/values/{parent.value.field}?q={q}&q_mode=complete&size=100&stringify=true"
+            }
           }
         }
       }
     }
-  }]
+  ]
 }
