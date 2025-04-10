@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/processing-export-file",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Export data into a csv file and attach it on metadata",
   "main": "index.js",
   "scripts": {
