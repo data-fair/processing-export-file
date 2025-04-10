@@ -9,14 +9,18 @@
         "dataset": {
           "type": "object",
           "title": "Jeu de donnée existant",
-          "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
-          "x-itemsProp": "results",
-          "x-itemTitle": "title",
-          "x-itemKey": "id",
           "properties": {
             "id": { "type": "string", "title": "Identifiant" },
             "href": { "type": "string", "title": "url" },
             "title": { "type": "string", "title": "Titre" }
+          },
+          "layout": {
+            "getItems": {
+              "url": "${context.dataFairUrl}/api/v1/datasets?q=${q}&select=id,title&${context.ownerFilter}",
+              "itemsResults": "data.results",
+              "itemTitle": "item.title",
+              "itemValue": "item.id"
+            }
           }
         }
       }
@@ -27,15 +31,19 @@
         "fields": {
           "type": "array",
           "title": "Colonnes du jeu de données",
-          "x-fromUrl": "{config.dataset.href}/schema?calculated=false",
-          "x-itemTitle": "label",
-          "x-itemKey": "key",
           "items": {
             "type": "object",
             "properties": {
               "key": { "type": "string" },
               "label": { "type": "string" },
               "type": { "type": "string" }
+            }
+          },
+          "layout": {
+            "getItems": {
+              "url": "${rootData.config.dataset.href}/schema?calculated=false",
+              "itemTitle": "item.label",
+              "itemValue": "item.key"
             }
           },
           "default": []
@@ -101,7 +109,11 @@
                 "items": {
                   "type": "string"
                 },
-                "x-fromUrl": "{config.dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+                "layout": {
+                  "getItems": {
+                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q=${q}&q_mode=complete&size=100&stringify=true"
+                  }
+                }
               }
             }
           },
@@ -118,18 +130,27 @@
               "minValue": {
                 "type": "string",
                 "title": "Valeur min",
-                "x-fromUrl": "{config.dataset.href}/values_agg?field={parent.value.field.key}&sort={parent.value.field.key}&{parent.value.field.key}_gte={q}&stringify=true",
-                "x-itemsProp": "aggs",
-                "x-itemTitle": "value",
-                "x-itemKey": "value"
+                "layout": {
+                  "getItems": {
+                    "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=${parent.data.field.key}&${parent.data.field.key}_gte=${q}&stringify=true",
+                    "itemsResults": "data.aggs",
+                    "itemTitle": "item.value",
+                    "itemValue": "item.value"
+                  }
+                }
               },
               "maxValue": {
                 "type": "string",
                 "title": "Valeur max",
-                "x-fromUrl": "{config.dataset.href}/values_agg?field={parent.value.field.key}&sort=-{parent.value.field.key}&{parent.value.field.key}_lte={q}&stringify=true",
-                "x-itemsProp": "aggs",
-                "x-itemTitle": "value",
-                "x-itemKey": "value"
+                "layout": {
+                  "getItems": {
+                    "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=-${parent.data.field.key}&${parent.data.field.key}_lte=${q}&stringify=true",
+                    "itemsResults": "data.aggs",
+                    "itemTitle": "item.value",
+                    "itemValue": "item.value"
+                  }
+                  }
+                }
               }
             }
           },
@@ -149,7 +170,11 @@
                 "items": {
                   "type": "string"
                 },
-                "x-fromUrl": "{config.dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+                "layout": {
+                  "getItems": {
+                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q=${q}&q_mode=complete&size=100&stringify=true"
+                  }
+                }
               }
             }
           }

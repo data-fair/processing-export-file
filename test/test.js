@@ -161,15 +161,35 @@ describe('Hello world processing', () => {
           }
         ],
         format: [
-          'geojson'
+          'geojson',
+          'pmtiles'
         ],
         filename: 'finess',
-        label: 'Finess',
+        label: 'Export',
         dataset: {
           title: 'Finess mars',
           id: 'av-0yfjtnmacafme-xrge7su',
           href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/av-0yfjtnmacafme-xrge7su'
-        }
+        },
+        filters: [
+          {
+            type: 'in',
+            field: {
+              key: 'departement',
+              'x-originalName': 'Departement',
+              type: 'string',
+              'x-cardinality': 103,
+              description: '',
+              label: 'Departement'
+            },
+            values: [
+              '56',
+              '35',
+              '29',
+              '22'
+            ]
+          }
+        ]
       },
       tmpDir: 'data/'
     }, config, false, false)

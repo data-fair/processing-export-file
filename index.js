@@ -193,17 +193,18 @@ async function upload (filePath, dataset, processingConfig, axios, log) {
   const attachments = dataset.attachments || []
   const idx = attachments.findIndex((/** @type {{name: string}} */a) => a.name === filename)
   if (idx >= 0) attachments.splice(idx, 1)
+  dataset.attachments = [...attachments,
+    {
+      ...response.data,
+      type: 'file',
+      title: processingConfig.label + ` (${filename.split('.').pop()})`
+    }
+  ]
   await axios({
     method: 'patch',
     url: processingConfig.dataset.href,
     data: {
-      attachments: [...attachments,
-        {
-          ...response.data,
-          type: 'file',
-          title: processingConfig.label
-        }
-      ]
+      attachments: dataset.attachments
     }
   })
 }
