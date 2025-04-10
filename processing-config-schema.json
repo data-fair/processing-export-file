@@ -27,7 +27,7 @@
         "fields": {
           "type": "array",
           "title": "Colonnes du jeu de données",
-          "x-fromUrl": "{dataset.href}/schema?calculated=false",
+          "x-fromUrl": "{config.dataset.href}/schema?calculated=false",
           "x-itemTitle": "label",
           "x-itemKey": "key",
           "items": {
@@ -96,7 +96,7 @@
                 "items": {
                   "type": "string"
                 },
-                "x-fromUrl": "{dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+                "x-fromUrl": "{config.dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
               }
             }
           },
@@ -113,7 +113,7 @@
               "minValue": {
                 "type": "string",
                 "title": "Valeur min",
-                "x-fromUrl": "{dataset.href}/values_agg?field={parent.value.field.key}&sort={parent.value.field.key}&{parent.value.field.key}_gte={q}&stringify=true",
+                "x-fromUrl": "{config.dataset.href}/values_agg?field={parent.value.field.key}&sort={parent.value.field.key}&{parent.value.field.key}_gte={q}&stringify=true",
                 "x-itemsProp": "aggs",
                 "x-itemTitle": "value",
                 "x-itemKey": "value"
@@ -121,7 +121,7 @@
               "maxValue": {
                 "type": "string",
                 "title": "Valeur max",
-                "x-fromUrl": "{dataset.href}/values_agg?field={parent.value.field.key}&sort=-{parent.value.field.key}&{parent.value.field.key}_lte={q}&stringify=true",
+                "x-fromUrl": "{config.dataset.href}/values_agg?field={parent.value.field.key}&sort=-{parent.value.field.key}&{parent.value.field.key}_lte={q}&stringify=true",
                 "x-itemsProp": "aggs",
                 "x-itemTitle": "value",
                 "x-itemKey": "value"
@@ -144,7 +144,7 @@
                 "items": {
                   "type": "string"
                 },
-                "x-fromUrl": "{dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+                "x-fromUrl": "{config.dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
               }
             }
           }
@@ -154,7 +154,7 @@
     "filterField": {
       "type": "object",
       "title": "Colonne de filtre",
-      "x-fromUrl": "{dataset.href}/schema?calculated=false",
+      "x-fromUrl": "{config.dataset.href}/schema?calculated=false",
       "x-itemTitle": "label",
       "x-itemKey": "key"
     }
