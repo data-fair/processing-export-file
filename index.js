@@ -1,4 +1,3 @@
-const filters2qs = require('@data-fair/lib-utils/filters').filters2qs
 const fs = require('node:fs')
 const fsPromise = require('node:fs/promises')
 const path = require('node:path')
@@ -107,6 +106,7 @@ const dataSize = 10000
  * @returns {Promise<void>}
  */
 async function fetchAndWriteData (processingConfig, axios, log, writeStreams, geomField) {
+  const filters2qs = (await import('@data-fair/lib-utils/filters/index.js')).filters2qs
   const urlObj = new URL(processingConfig.dataset.href + '/lines')
   urlObj.searchParams.set('size', dataSize.toString())
   if (processingConfig.fields.length) {
