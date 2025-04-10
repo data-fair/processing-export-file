@@ -159,9 +159,12 @@
     "filterField": {
       "type": "object",
       "title": "Colonne de filtre",
-      "x-fromUrl": "{config.dataset.href}/schema?calculated=false",
-      "x-itemTitle": "label",
-      "x-itemKey": "key"
+      "layout": {
+        "getItems": {
+          "url": "${rootData.config.dataset.href}/schema?calculated=false",
+          "itemTitle": "item.label"
+        }
+      }
     }
   }
 }

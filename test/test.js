@@ -89,7 +89,7 @@ describe('Hello world processing', () => {
     await exportFile.run(context)
   })
 
-  it.only('should export a pm tiles', async function () {
+  it('should export a pm tiles', async function () {
     // @ts-ignore
     this.timeout(1000000)
 
@@ -129,6 +129,47 @@ describe('Hello world processing', () => {
           },
           values: ['35', '56']
         }]
+      },
+      tmpDir: 'data/'
+    }, config, false, false)
+    await exportFile.run(context)
+  })
+
+  it.only('should export a pm tiles', async function () {
+    // @ts-ignore
+    this.timeout(1000000)
+
+    const testsUtils = await import('@data-fair/lib/processings/tests-utils.js')
+    const context = testsUtils.context({
+      pluginConfig: {},
+      processingConfig: {
+        fields: [
+          {
+            key: 'nofinesset',
+            type: 'integer',
+            label: 'nofinesset'
+          },
+          {
+            key: 'nofinessej',
+            type: 'integer',
+            label: 'nofinessej'
+          },
+          {
+            key: 'raisonsociale',
+            type: 'string',
+            label: 'RaisonSociale'
+          }
+        ],
+        format: [
+          'geojson'
+        ],
+        filename: 'finess',
+        label: 'Finess',
+        dataset: {
+          title: 'Finess mars',
+          id: 'av-0yfjtnmacafme-xrge7su',
+          href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/av-0yfjtnmacafme-xrge7su'
+        }
       },
       tmpDir: 'data/'
     }, config, false, false)

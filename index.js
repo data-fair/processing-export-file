@@ -29,6 +29,10 @@ function getCSVStreamPipeline (filePath, processingConfig) {
     cast: { boolean: value => value ? '1' : '0' }
   }
   if (processingConfig.fields.length) params.columns = processingConfig.fields.map((/** @type {{key: string}} */field) => field.key)
+  if (params.columns.includes('_geopoint')) {
+    params.columns.push('latitude')
+    params.columns.push('longitude')
+  }
   return [
     csv.stringify(params),
     fs.createWriteStream(filePath, { flags: 'w' })
@@ -218,6 +222,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   const geomField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'geometry') || f.key === '_geoshape')
   const latField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latitude') || f.key === 'latitude')
   const lonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'longitude') || f.key === 'longitude')
+  const latLonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latLon') || f.key === '_geopoint')
   if (!processingConfig.fields.length) processingConfig.fields = dataset.schema.filter(f => !f['x-calculated'])
   if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
     if (latField && lonField) {
@@ -225,6 +230,8 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
       if (!processingConfig.fields.find(f => f.key === lonField.key)) processingConfig.fields.push(lonField)
     } else if (geomField && !processingConfig.fields.find(f => f.key === geomField.key)) {
       processingConfig.fields.push(geomField)
+    } else if (latLonField && !processingConfig.fields.find(f => f.key === latLonField.key)) {
+      processingConfig.fields.push(latLonField)
     }
   }
 
@@ -266,12 +273,12 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
         <SrcDataSource>${filePathCsv}</SrcDataSource>
         <GeometryType>${latField && lonField ? 'wkbPoint' : 'wkbUnknown'}</GeometryType>
         <LayerSRS>WGS84</LayerSRS>
-        <GeometryField encoding="${latField && lonField ? 'PointFromColumns' : 'WKT'}" ${latField && lonField ? `x="${lonField.key}" y="${latField.key}"` : `field="${geomField.key}"`} />
-        ${processingConfig.fields.filter(f => f.key !== latField?.key && f.key !== lonField?.key && f.key !== geomField?.key).map(f => `<Field name="${f.key}" type="${types[f.type]}"/>`).join('\n')} 
+        <GeometryField encoding="${(latField && lonField) || latLonField ? 'PointFromColumns' : 'WKT'}" ${(latField && lonField) || latLonField ? `x="${lonField?.key || 'longitude'}" y="${latField?.key || 'latitude'}"` : `field="${geomField.key}"`} />
+        ${processingConfig.fields.filter(f => f.key !== latField?.key && f.key !== lonField?.key && f.key !== geomField?.key && f.key !== latLonField?.key).map(f => `<Field name="${f.key}" type="${types[f.type]}"/>`).join('\n')} 
     </OGRVRTLayer>
 </OGRVRTDataSource>`)
     const ogr2ogrOptions = ['-f', 'GEOJSON', filePathGeojson, vrtPath]
-    if (!geomField && (!latField || !lonField)) {
+    if (!geomField && !latLonField && (!latField || !lonField)) {
       await log.error('Les concepts nécessaires n\'ont pas été trouvés')
       return
     }
