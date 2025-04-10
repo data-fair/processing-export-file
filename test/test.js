@@ -62,4 +62,76 @@ describe('Hello world processing', () => {
     }, config, false, false)
     await exportFile.run(context)
   })
+
+  it('should export a pm tiles', async function () {
+    // @ts-ignore
+    this.timeout(1000000)
+
+    const testsUtils = await import('@data-fair/lib/processings/tests-utils.js')
+    const context = testsUtils.context({
+      pluginConfig: {},
+      processingConfig: {
+        fields: [],
+        format: [
+          'pmtiles'
+        ],
+        filename: 'capitales',
+        label: 'Export PM Tiles',
+        dataset: {
+          title: 'capitales-du-monde',
+          id: 'capitales-du-monde',
+          href: 'https://demo.koumoul.com/data-fair/api/v1/datasets/capitales-du-monde'
+        },
+        filters: []
+      },
+      tmpDir: 'data/'
+    }, config, false, false)
+    await exportFile.run(context)
+  })
+
+  it.only('should export a pm tiles', async function () {
+    // @ts-ignore
+    this.timeout(1000000)
+
+    const testsUtils = await import('@data-fair/lib/processings/tests-utils.js')
+    const context = testsUtils.context({
+      pluginConfig: {},
+      processingConfig: {
+        fields: [{
+          key: 'insee_dep',
+          type: 'string'
+        }],
+        format: [
+          'pmtiles'
+        ],
+        filename: 'departements',
+        label: 'Export PM Tiles',
+        dataset: {
+          title: 'Contours des départements',
+          id: 'contours-des-departements',
+          href: 'https://koumoul.com/data-fair/api/v1/datasets/contours-des-departements'
+        },
+        filters: [{
+          type: 'in',
+          field: {
+            key: 'insee_dep',
+            type: 'string',
+            'x-refersTo': 'http://rdf.insee.fr/def/geo#codeDepartement',
+            'x-concept': {
+              id: 'codeDepartement',
+              title: 'Code département',
+              primary: true
+            },
+            title: 'Code département',
+            description: '',
+            'x-capabilities': {},
+            'x-cardinality': 101
+          },
+          values: ['35', '56']
+        }]
+      },
+      tmpDir: 'data/'
+    }, config, false, false)
+    await exportFile.run(context)
+  })
 })

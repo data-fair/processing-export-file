@@ -27,21 +27,11 @@
         "fields": {
           "type": "array",
           "title": "Colonnes du jeu de données",
-          "x-fromUrl": "{parent.parent.value.dataset.href}/schema",
+          "x-fromUrl": "{dataset.href}/schema?calculated=false",
           "x-itemTitle": "label",
           "x-itemKey": "key",
           "items": {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "title": "Colonne"
-              },
-              "type": {
-                "type": "string",
-                "title": "type"
-              }
-            }
+            "type": "string"
           },
           "default": []
         },
@@ -73,28 +63,100 @@
           "title": "Libellé de la pièce jointe",
           "default": "Export"
         },
-        "filter": {
-          "type": "object",
-          "title": "Filtrer les lignes",
-          "properties": {
-            "field": {
-              "type": "string",
-              "title": "Code colonne",
-              "x-fromUrl": "{parent.parent.parent.value.dataset.href}/schema",
-              "x-itemTitle": "label",
-              "x-itemKey": "key",
-              "items": {
-                "type": "string"
-              }
-            },
-            "value": {
-              "type": "string",
-              "title": "Valeur",
-              "x-fromUrl": "{parent.parent.parent.value.dataset.href}/values/{parent.value.field}?q={q}&q_mode=complete&size=100&stringify=true"
-            }
-          }
+        "filters": {
+          "$ref": "#/definitions/filters"
         }
       }
     }
-  ]
+  ],
+  "definitions": {
+    "filters": {
+      "title": "Filtres prédéfinis",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "default": {
+          "type": "in"
+        },
+        "required": ["type"],
+        "oneOf": [
+          {
+            "title": "Restreindre à des valeurs",
+            "required": ["field"],
+            "properties": {
+              "type": {
+                "const": "in"
+              },
+              "field": {
+                "$ref": "#/definitions/filterField"
+              },
+              "values": {
+                "type": "array",
+                "title": "Valeurs",
+                "items": {
+                  "type": "string"
+                },
+                "x-fromUrl": "{dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+              }
+            }
+          },
+          {
+            "title": "Restreindre à un interval de valeurs",
+            "required": ["field"],
+            "properties": {
+              "type": {
+                "const": "interval"
+              },
+              "field": {
+                "$ref": "#/definitions/filterField"
+              },
+              "minValue": {
+                "type": "string",
+                "title": "Valeur min",
+                "x-fromUrl": "{dataset.href}/values_agg?field={parent.value.field.key}&sort={parent.value.field.key}&{parent.value.field.key}_gte={q}&stringify=true",
+                "x-itemsProp": "aggs",
+                "x-itemTitle": "value",
+                "x-itemKey": "value"
+              },
+              "maxValue": {
+                "type": "string",
+                "title": "Valeur max",
+                "x-fromUrl": "{dataset.href}/values_agg?field={parent.value.field.key}&sort=-{parent.value.field.key}&{parent.value.field.key}_lte={q}&stringify=true",
+                "x-itemsProp": "aggs",
+                "x-itemTitle": "value",
+                "x-itemKey": "value"
+              }
+            }
+          },
+          {
+            "title": "Exclure des valeurs",
+            "required": ["field"],
+            "properties": {
+              "type": {
+                "const": "out"
+              },
+              "field": {
+                "$ref": "#/definitions/filterField"
+              },
+              "values": {
+                "type": "array",
+                "title": "Valeurs à exclure",
+                "items": {
+                  "type": "string"
+                },
+                "x-fromUrl": "{dataset.href}/values/{parent.value.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "filterField": {
+      "type": "object",
+      "title": "Colonne de filtre",
+      "x-fromUrl": "{dataset.href}/schema?calculated=false",
+      "x-itemTitle": "label",
+      "x-itemKey": "key"
+    }
+  }
 }

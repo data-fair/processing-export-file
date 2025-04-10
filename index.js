@@ -1,12 +1,21 @@
+const filters2qs = require('@data-fair/lib-utils/filters').filters2qs
 const fs = require('node:fs')
+const fsPromise = require('node:fs/promises')
 const path = require('node:path')
 const { Writable } = require('node:stream')
 const { pipeline, finished } = require('node:stream/promises')
 const util = require('node:util')
 const FormData = require('form-data')
 const exec = require('./lib/exec')
+const { stringify } = require('wkt')
 
 let stopped = false
+
+const types = {
+  integer: 'Integer',
+  number: 'Real',
+  string: 'String'
+}
 
 /**
  * @param {string} filePath
@@ -97,15 +106,13 @@ const dataSize = 10000
  * @param {import('node:stream').Writable[]} writeStreams
  * @returns {Promise<void>}
  */
-async function fetchAndWriteData (processingConfig, axios, log, writeStreams) {
+async function fetchAndWriteData (processingConfig, axios, log, writeStreams, geomField) {
   const urlObj = new URL(processingConfig.dataset.href + '/lines')
   urlObj.searchParams.set('size', dataSize.toString())
   if (processingConfig.fields.length) {
     urlObj.searchParams.set('select', processingConfig.fields.map((/** @type {{key: string}} */field) => field.key).join(','))
   }
-  if (processingConfig.filter && processingConfig.filter.field && processingConfig.filter.value) {
-    urlObj.searchParams.set('qs', `${processingConfig.filter.field}:${processingConfig.filter.value}`)
-  }
+  if (processingConfig.filters?.length) { urlObj.searchParams.set('qs', filters2qs(processingConfig.filters)) }
 
   /** @type {string | undefined} */
   let url = urlObj.href
@@ -132,6 +139,9 @@ async function fetchAndWriteData (processingConfig, axios, log, writeStreams) {
           coordinates: line['_geoshape.coordinates'],
           type: line['_geoshape.type']
         })
+      }
+      if (geomField && line[geomField.key]) {
+        line[geomField.key] = stringify(JSON.parse(line[geomField.key]))
       }
       for (const writeStream of writeStreams) {
         // writing to the stream without piping but while still respecting backpressure
@@ -204,7 +214,21 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   const streamPipelines = []
   /** @type {string[]} */
   const filePaths = []
-  if (processingConfig.format.includes('csv') || processingConfig.format.includes('pmtiles')) {
+  const dataset = (await axios(processingConfig.dataset.href)).data
+  const geomField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'geometry') || f.key === '_geoshape')
+  const latField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latitude') || f.key === 'latitude')
+  const lonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'longitude') || f.key === 'longitude')
+  if (!processingConfig.fields.length) processingConfig.fields = dataset.schema.filter(f => !f['x-calculated'])
+  if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
+    if (latField && lonField) {
+      if (!processingConfig.fields.find(f => f.key === latField.key)) processingConfig.fields.push(latField)
+      if (!processingConfig.fields.find(f => f.key === lonField.key)) processingConfig.fields.push(lonField)
+    } else if (geomField && !processingConfig.fields.find(f => f.key === geomField.key)) {
+      processingConfig.fields.push(geomField)
+    }
+  }
+
+  if (processingConfig.format.includes('csv') || processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
     const filePathCsv = path.join(tmpDir, processingConfig.filename + '.csv')
     streamPipelines.push(getCSVStreamPipeline(filePathCsv, processingConfig))
     if (processingConfig.format.includes('csv')) filePaths.push(filePathCsv)
@@ -223,9 +247,8 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   const promises = streamPipelines.map(streams => {
     return streams.length > 1 ? pipeline(streams) : finished(streams[0])
   })
-  promises.push(fetchAndWriteData(processingConfig, axios, log, streamPipelines.map(streams => streams[0])))
+  promises.push(fetchAndWriteData(processingConfig, axios, log, streamPipelines.map(streams => streams[0]), geomField))
   await Promise.all(promises)
-  const dataset = (await axios(processingConfig.dataset.href)).data
 
   if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
     if (!dataset.bbox) {
@@ -237,34 +260,37 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
     if (processingConfig.format.includes('geojson')) {
       filePaths.push(filePathGeojson)
     }
-    const ogr2ogrOptions = ['-f', 'GEOJSON', filePathGeojson, filePathCsv, '-a_srs', 'EPSG:4326']
-    const geomField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'geometry') || f.key === '_geoshape')
-    const latField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latitude') || f.key === 'latitude')
-    const lonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'longitude') || f.key === 'longitude')
-    if (geomField) {
-      ogr2ogrOptions.push('-oo')
-      ogr2ogrOptions.push(`GEOM_POSSIBLE_NAMES=${geomField.key}`)
-    } else if (latField && lonField) {
-      ogr2ogrOptions.push('-oo')
-      ogr2ogrOptions.push(`X_POSSIBLE_NAMES=${lonField.key}`)
-      ogr2ogrOptions.push('-oo')
-      ogr2ogrOptions.push(`Y_POSSIBLE_NAMES=${latField.key}`)
-    } else {
+    const vrtPath = path.join(tmpDir, processingConfig.filename + '.vrt')
+    await fsPromise.writeFile(vrtPath, `<OGRVRTDataSource>
+    <OGRVRTLayer name="${processingConfig.filename}">
+        <SrcDataSource>${filePathCsv}</SrcDataSource>
+        <GeometryType>${latField && lonField ? 'wkbPoint' : 'wkbUnknown'}</GeometryType>
+        <LayerSRS>WGS84</LayerSRS>
+        <GeometryField encoding="${latField && lonField ? 'PointFromColumns' : 'WKT'}" ${latField && lonField ? `x="${lonField.key}" y="${latField.key}"` : `field="${geomField.key}"`} />
+        ${processingConfig.fields.filter(f => f.key !== latField?.key && f.key !== lonField?.key && f.key !== geomField?.key).map(f => `<Field name="${f.key}" type="${types[f.type]}"/>`).join('\n')} 
+    </OGRVRTLayer>
+</OGRVRTDataSource>`)
+    const ogr2ogrOptions = ['-f', 'GEOJSON', filePathGeojson, vrtPath]
+    if (!geomField && (!latField || !lonField)) {
       await log.error('Les concepts nécessaires n\'ont pas été trouvés')
       return
     }
     await exec('ogr2ogr', ogr2ogrOptions)
     if (processingConfig.format.includes('pmtiles')) {
+      await log.info('Génération du fichier au format pmtiles')
       const filePathPmtiles = path.join(tmpDir, processingConfig.filename + '.pmtiles')
-      await exec('tippecanoe', ['-zg', '--projection=EPSG:4326', '--force', '--drop-densest-as-needed', '-o', filePathPmtiles, '-l', 'default', filePathGeojson])
+      await exec('tippecanoe', ['-zg', '--projection=EPSG:4326', '--force', geomField ? '-S100' : '--drop-densest-as-needed', '-pS', '-o', filePathPmtiles, '-l', 'default', filePathGeojson])
+      // await exec('ogr2ogr', ['-f', 'PMTiles', '-dsco', 'MAXZOOM=12', '-skipfailures', filePathPmtiles, filePathGeojson])
       filePaths.push(filePathPmtiles)
     }
     if (processingConfig.format.includes('shz')) {
+      await log.info('Génération du fichier au format shz')
       const filePathShz = path.join(tmpDir, processingConfig.filename + '.shz')
       await exec('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', filePathShz, filePathGeojson])
       filePaths.push(filePathShz)
     }
     if (processingConfig.format.includes('gpkg')) {
+      await log.info('Génération du fichier au format gpkg')
       const filePathGpkg = path.join(tmpDir, processingConfig.filename + '.gpkg')
       await exec('ogr2ogr', ['-f', 'GPKG', '-skipfailures', filePathGpkg, filePathGeojson])
       filePaths.push(filePathGpkg)
