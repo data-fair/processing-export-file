@@ -16,7 +16,7 @@
           },
           "layout": {
             "getItems": {
-              "url": "${context.dataFairUrl}/api/v1/datasets?q=${q}&select=id,title&${context.ownerFilter}",
+              "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
               "itemsResults": "data.results",
               "itemTitle": "item.title",
               "itemValue": "item.id"
@@ -111,7 +111,7 @@
                 },
                 "layout": {
                   "getItems": {
-                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q=${q}&q_mode=complete&size=100&stringify=true"
+                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
                   }
                 }
               }
@@ -132,10 +132,10 @@
                 "title": "Valeur min",
                 "layout": {
                   "getItems": {
-                    "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=${parent.data.field.key}&${parent.data.field.key}_gte=${q}&stringify=true",
+                    "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=${parent.data.field.key}&${parent.data.field.key}_gte={q}&stringify=true",
                     "itemsResults": "data.aggs",
                     "itemTitle": "item.value",
-                    "itemValue": "item.value"
+                    "itemValue": "JSON.stringify(item.value)"
                   }
                 }
               },
@@ -144,10 +144,10 @@
                 "title": "Valeur max",
                 "layout": {
                   "getItems": {
-                    "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=-${parent.data.field.key}&${parent.data.field.key}_lte=${q}&stringify=true",
+                    "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=-${parent.data.field.key}&${parent.data.field.key}_lte={q}&stringify=true",
                     "itemsResults": "data.aggs",
                     "itemTitle": "item.value",
-                    "itemValue": "item.value"
+                    "itemValue": "JSON.stringify(item.value)"
                   }
                 }
               }
@@ -171,7 +171,7 @@
                 },
                 "layout": {
                   "getItems": {
-                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q=${q}&q_mode=complete&size=100&stringify=true"
+                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
                   }
                 }
               }
