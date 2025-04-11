@@ -13,7 +13,8 @@ let stopped = false
 const types = {
   integer: 'Integer',
   number: 'Real',
-  string: 'String'
+  string: 'String',
+  boolean: 'Integer'
 }
 
 /**
@@ -275,7 +276,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
         <GeometryType>${latField && lonField ? 'wkbPoint' : 'wkbUnknown'}</GeometryType>
         <LayerSRS>WGS84</LayerSRS>
         <GeometryField encoding="${(latField && lonField) || latLonField ? 'PointFromColumns' : 'WKT'}" ${(latField && lonField) || latLonField ? `x="${lonField?.key || 'longitude'}" y="${latField?.key || 'latitude'}"` : `field="${geomField.key}"`} />
-        ${processingConfig.fields.filter(f => f.key !== latField?.key && f.key !== lonField?.key && f.key !== geomField?.key && f.key !== latLonField?.key).map(f => `<Field name="${f.key}" type="${types[f.type]}"/>`).join('\n')} 
+        ${processingConfig.fields.filter(f => f.key !== latField?.key && f.key !== lonField?.key && f.key !== geomField?.key && f.key !== latLonField?.key).map(f => `<Field name="${f.key}" type="${types[f.type]}" subtype="${f.type === 'boolean' ? 'Boolean' : 'None'}"/>`).join('\n')} 
     </OGRVRTLayer>
 </OGRVRTDataSource>`)
     const ogr2ogrOptions = ['-f', 'GEOJSON', filePathGeojson, vrtPath]
