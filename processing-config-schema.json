@@ -19,7 +19,7 @@
               "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
               "itemsResults": "data.results",
               "itemTitle": "item.title",
-              "itemValue": "item.id"
+              "itemKey": "item.id"
             }
           }
         }
@@ -43,7 +43,7 @@
             "getItems": {
               "url": "${rootData.config.dataset.href}/schema?calculated=false",
               "itemTitle": "item.label",
-              "itemValue": "item.key"
+              "itemKey": "item.key"
             }
           },
           "default": []
@@ -186,7 +186,8 @@
       "layout": {
         "getItems": {
           "url": "${rootData.config.dataset.href}/schema?calculated=false",
-          "itemTitle": "item.label"
+          "itemTitle": "item.label",
+          "itemKey": "item.key"
         }
       }
     }
