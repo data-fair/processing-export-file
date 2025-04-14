@@ -60,7 +60,7 @@
               "xlsx",
               "geojson",
               "pmtiles",
-              "shz",
+              "shp",
               "gpkg"
             ]
           },

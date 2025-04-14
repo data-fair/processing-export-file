@@ -226,7 +226,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   const lonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'longitude'))
   const latLonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latLon'))
   if (!processingConfig.fields.length) processingConfig.fields = dataset.schema.filter(f => !f['x-calculated'])
-  if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
+  if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shp') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
     if (latField && lonField) {
       if (!processingConfig.fields.find(f => f.key === latField.key)) processingConfig.fields.push(latField)
       if (!processingConfig.fields.find(f => f.key === lonField.key)) processingConfig.fields.push(lonField)
@@ -237,7 +237,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
     }
   }
 
-  if (processingConfig.format.includes('csv') || processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
+  if (processingConfig.format.includes('csv') || processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shp') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
     const filePathCsv = path.join(tmpDir, processingConfig.filename + '.csv')
     streamPipelines.push(getCSVStreamPipeline(filePathCsv, processingConfig))
     if (processingConfig.format.includes('csv')) filePaths.push(filePathCsv)
@@ -259,7 +259,7 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   promises.push(fetchAndWriteData(processingConfig, axios, log, streamPipelines.map(streams => streams[0]), geomField))
   await Promise.all(promises)
 
-  if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
+  if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shp') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
     if (!dataset.bbox) {
       await log.error('Le jeu de données n\'est pas géographique et ne peut pas être converti')
       return
@@ -292,11 +292,11 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
       // await exec('ogr2ogr', ['-f', 'PMTiles', '-dsco', 'MAXZOOM=12', '-skipfailures', filePathPmtiles, filePathGeojson])
       filePaths.push(filePathPmtiles)
     }
-    if (processingConfig.format.includes('shz')) {
-      await log.info('Génération du fichier au format shz')
-      const filePathShz = path.join(tmpDir, processingConfig.filename + '.shz')
-      await exec('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', filePathShz, filePathGeojson])
-      filePaths.push(filePathShz)
+    if (processingConfig.format.includes('shp')) {
+      await log.info('Génération du fichier au format shp')
+      const filePathShp = path.join(tmpDir, processingConfig.filename + '.zip')
+      await exec('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', filePathShp, filePathGeojson])
+      filePaths.push(filePathShp)
     }
     if (processingConfig.format.includes('gpkg')) {
       await log.info('Génération du fichier au format gpkg')
