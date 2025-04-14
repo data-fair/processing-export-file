@@ -221,10 +221,10 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
   /** @type {string[]} */
   const filePaths = []
   const dataset = (await axios(processingConfig.dataset.href)).data
-  const geomField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'geometry') || f.key === '_geoshape')
-  const latField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latitude') || f.key === 'latitude')
-  const lonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'longitude') || f.key === 'longitude')
-  const latLonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latLon') || f.key === '_geopoint')
+  const geomField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'geometry'))
+  const latField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latitude'))
+  const lonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'longitude'))
+  const latLonField = dataset.schema.find(f => (f['x-concept'] && f['x-concept'].id === 'latLon'))
   if (!processingConfig.fields.length) processingConfig.fields = dataset.schema.filter(f => !f['x-calculated'])
   if (processingConfig.format.includes('pmtiles') || processingConfig.format.includes('shz') || processingConfig.format.includes('gpkg') || processingConfig.format.includes('geojson')) {
     if (latField && lonField) {
@@ -273,9 +273,9 @@ exports.run = async ({ processingConfig, tmpDir, axios, log }) => {
     await fsPromise.writeFile(vrtPath, `<OGRVRTDataSource>
     <OGRVRTLayer name="${processingConfig.filename}">
         <SrcDataSource>${filePathCsv}</SrcDataSource>
-        <GeometryType>${latField && lonField ? 'wkbPoint' : 'wkbUnknown'}</GeometryType>
+        <GeometryType>${geomField ? 'wkbUnknown' : 'wkbPoint'}</GeometryType>
         <LayerSRS>WGS84</LayerSRS>
-        <GeometryField encoding="${(latField && lonField) || latLonField ? 'PointFromColumns' : 'WKT'}" ${(latField && lonField) || latLonField ? `x="${lonField?.key || 'longitude'}" y="${latField?.key || 'latitude'}"` : `field="${geomField.key}"`} />
+        <GeometryField encoding="${geomField ? 'WKT' : 'PointFromColumns'}" ${geomField ? `field="${geomField.key}"` : `x="${lonField?.key || 'longitude'}" y="${latField?.key || 'latitude'}"`} />
         ${processingConfig.fields.filter(f => f.key !== latField?.key && f.key !== lonField?.key && f.key !== geomField?.key && f.key !== latLonField?.key).map(f => `<Field name="${f.key}" type="${types[f.type]}" subtype="${f.type === 'boolean' ? 'Boolean' : 'None'}"/>`).join('\n')} 
     </OGRVRTLayer>
 </OGRVRTDataSource>`)

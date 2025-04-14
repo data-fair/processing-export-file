@@ -143,53 +143,18 @@ describe('Hello world processing', () => {
     const context = testsUtils.context({
       pluginConfig: {},
       processingConfig: {
-        fields: [
-          {
-            key: 'nofinesset',
-            type: 'integer',
-            label: 'nofinesset'
-          },
-          {
-            key: 'nofinessej',
-            type: 'integer',
-            label: 'nofinessej'
-          },
-          {
-            key: 'raisonsociale',
-            type: 'string',
-            label: 'RaisonSociale'
-          }
-        ],
+        fields: [],
         format: [
-          'geojson',
-          'pmtiles'
+          'gpkg'
         ],
-        filename: 'finess',
+        filename: 'export',
         label: 'Export',
         dataset: {
-          title: 'Finess mars',
-          id: 'av-0yfjtnmacafme-xrge7su',
-          href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/av-0yfjtnmacafme-xrge7su'
+          title: 'Departements 2018',
+          id: 'h1j2tduaoyr25wvc5v8tg-gx',
+          href: 'https://staging-koumoul.com/data-fair/api/v1/datasets/h1j2tduaoyr25wvc5v8tg-gx'
         },
-        filters: [
-          {
-            type: 'in',
-            field: {
-              key: 'departement',
-              'x-originalName': 'Departement',
-              type: 'string',
-              'x-cardinality': 103,
-              description: '',
-              label: 'Departement'
-            },
-            values: [
-              '56',
-              '35',
-              '29',
-              '22'
-            ]
-          }
-        ]
+        filters: []
       },
       tmpDir: 'data/'
     }, config, false, false)
