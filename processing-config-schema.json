@@ -52,6 +52,7 @@
           "type": "array",
           "title": "Format de sortie des fichiers",
           "description": "Selectionner plusieurs format pour générer plusieurs fichiers",
+          "layout": "select",
           "items": {
             "type": "string",
             "enum": [
