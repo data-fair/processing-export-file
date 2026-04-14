@@ -29,19 +29,22 @@ export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void>
   await log.task('Téléchargement des données')
   let count = 0
 
-  while (url) {
-    if (isStopped()) return
-    const { data }: { data: any } = await axios(url)
-    url = data.next
-    for (const line of data.results) {
-      transformLine(line, fields, geomField)
-      for (const writeStream of writeStreams) {
-        const keepWriting = writeStream.write(line)
-        if (!keepWriting) await new Promise<void>((resolve) => writeStream.once('drain', () => resolve()))
+  try {
+    while (url) {
+      if (isStopped()) return
+      const { data }: { data: any } = await axios(url)
+      url = data.next
+      for (const line of data.results) {
+        transformLine(line, fields, geomField)
+        for (const writeStream of writeStreams) {
+          const keepWriting = writeStream.write(line)
+          if (!keepWriting) await new Promise<void>((resolve) => writeStream.once('drain', () => resolve()))
+        }
       }
+      count += data.results.length
+      await log.progress('Téléchargement des données', count, data.total)
     }
-    count += data.results.length
-    await log.progress('Téléchargement des données', count, data.total)
+  } finally {
+    for (const writeStream of writeStreams) writeStream.end()
   }
-  for (const writeStream of writeStreams) writeStream.end()
 }
