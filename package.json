@@ -1,41 +1,65 @@
 {
   "name": "@data-fair/processing-export-file",
-  "version": "0.6.12",
-  "description": "Export data into a csv file and attach it on metadata",
-  "main": "index.js",
+  "version": "1.0.0",
+  "description": "Export data-fair dataset lines into files (csv, parquet, xlsx, geojson, pmtiles, shp, gpkg) attached as dataset metadata.",
+  "main": "index.ts",
+  "type": "module",
   "scripts": {
-    "test": "mocha --exit",
-    "lint": "eslint --ignore-path .gitignore .",
-    "lint-fix": "eslint --ignore-path .gitignore --fix .",
-    "check-types": "tsc"
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix .",
+    "build-types": "export NODE_OPTIONS='--experimental-strip-types' && df-build-types ./",
+    "test-base": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=spec --test-reporter-destination=stdout",
+    "test": "npm run test-base test-it/*.ts",
+    "prepare": "husky"
   },
-  "author": "",
-  "license": "MIT",
+  "imports": {
+    "#config": "./lib/config.ts",
+    "#types/*": "./types/*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/data-fair/processing-export-file.git"
+  },
   "keywords": [
     "data-fair-processings-plugin"
   ],
-  "devDependencies": {
-    "@types/config": "^3.3.3",
-    "@types/mocha": "^10.0.6",
-    "axios": "^1.6.7",
-    "config": "^3.3.6",
-    "dayjs": "^1.11.10",
-    "draftlog": "^1.0.13",
-    "eslint": "^7.18.0",
-    "mocha": "^10.2.0",
-    "standard": "^16.0.3",
-    "typescript": "^5.3.3",
-    "ws": "^8.16.0"
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/data-fair/processing-export-file/issues"
   },
+  "homepage": "https://github.com/data-fair/processing-export-file#readme",
   "dependencies": {
-    "@data-fair/lib": "^0.21.0",
-    "@data-fair/lib-utils": "^1.5.0",
+    "@data-fair/lib-utils": "^1.10.1",
     "@dsnp/parquetjs": "^1.5.0",
-    "child-process-promise": "^2.2.1",
     "csv-stringify": "^6.4.5",
-    "debug": "^4.3.4",
+    "debug": "^4.4.0",
     "exceljs": "^4.4.0",
     "form-data": "^4.0.0",
     "wkt": "^0.1.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@data-fair/lib-common-types": "^1.20.0",
+    "@data-fair/lib-processing-dev": "^0.2.0",
+    "@data-fair/lib-types-builder": "^1.11.3",
+    "@types/node": "^22",
+    "config": "^4.4.1",
+    "eslint": "^9.26.0",
+    "husky": "^9.1.7",
+    "neostandard": "^0.12.1",
+    "nock": "^14.0.0",
+    "typescript": "^5.8.3"
+  },
+  "files": [
+    "plugin-config-schema.json",
+    "processing-config-schema.json",
+    "./lib/**/*",
+    "./types/**/*"
+  ],
+  "relativeDependencies": {
+    "@data-fair/lib-common-types": "../../lib/packages/common-types",
+    "@data-fair/lib-processing-dev": "../../lib/packages/processing-dev"
   }
 }

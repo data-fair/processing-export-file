@@ -3,12 +3,13 @@
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "NodeNext",
-    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
     "noEmit": true,
     "strict": true,
     "allowJs": true,
     "checkJs": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".type"]
 }

@@ -1,4 +1,7 @@
 {
+  "$id": "https://github.com/data-fair/processing-export-file/processing-config",
+  "x-exports": ["types", "validate"],
+  "title": "ProcessingConfig",
   "type": "object",
   "x-display": "tabs",
   "required": ["dataset", "fields", "label", "filename"],
