@@ -44,6 +44,7 @@
     "@data-fair/lib-common-types": "^1.20.0",
     "@data-fair/lib-processing-dev": "^0.2.0",
     "@data-fair/lib-types-builder": "^1.11.3",
+    "@types/debug": "^4.1.13",
     "@types/node": "^22",
     "config": "^4.4.1",
     "eslint": "^9.26.0",
