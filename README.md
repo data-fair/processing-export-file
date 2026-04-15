@@ -1,49 +1,49 @@
 # <img alt="Data FAIR logo" src="https://cdn.jsdelivr.net/gh/data-fair/data-fair@master/ui/public/assets/logo.svg" width="30"> @data-fair/processing-export-file
 
-Plugin [data-fair/processings](https://github.com/data-fair/processings) qui exporte les lignes d'un jeu de données dans un ou plusieurs fichiers attachés en tant que pièces jointes de métadonnées. Prend en charge 7 formats : CSV, Parquet, XLSX, GeoJSON, PMTiles, Shapefile, GeoPackage.
+[data-fair/processings](https://github.com/data-fair/processings) plugin that exports dataset lines into one or several files attached as dataset metadata attachments. Supports 7 output formats: CSV, Parquet, XLSX, GeoJSON, PMTiles, Shapefile, GeoPackage.
 
 ## Features
 
-- **Multi-format** — génère simultanément plusieurs formats sélectionnés (csv, parquet, xlsx, geojson, pmtiles, shp, gpkg).
-- **Filtres** — restreint l'export à un sous-ensemble des lignes via filtres `in`, `interval`, `out` (traduits en `qs` via `filters2qs`).
-- **Sélection de colonnes** — par défaut exporte toutes les colonnes non-calculées ; configurable par champ.
-- **Support géographique** — détecte automatiquement les concepts `latitude` / `longitude` / `geometry` / `latLon` pour générer les formats géo via un VRT OGR intermédiaire.
-- **Pagination streamée** — lit le dataset par pages de 10 000 lignes avec backpressure correct, pas de chargement complet en mémoire.
-- **Attachement comme métadonnée** — uploade chaque fichier produit sur `/metadata-attachments` du dataset et met à jour les attachments.
-- **Graceful stop** — interrompt proprement l'export entre deux pages si la plateforme demande l'arrêt.
+- **Multi-format** — generates several formats at once from a single pass (csv, parquet, xlsx, geojson, pmtiles, shp, gpkg).
+- **Filters** — restricts the export to a subset of lines with `in`, `interval` or `out` filters (translated into a `qs` query via `filters2qs`).
+- **Column selection** — exports every non-calculated column by default, or a user-defined subset.
+- **Geographic support** — automatically detects the `latitude`, `longitude`, `geometry` or `latLon` concepts and generates geographic formats through an intermediate OGR VRT layer.
+- **Streamed pagination** — reads the dataset in pages of 10 000 lines with proper backpressure, no full in-memory buffering.
+- **Attachment upload** — uploads each produced file on `/metadata-attachments` and patches the dataset attachments.
+- **Graceful stop** — aborts cleanly between two pages when the platform requests a stop.
 
-## Prérequis système
+## System requirements
 
-Les formats **géographiques** dépendent de deux binaires externes :
+Geographic formats depend on two external binaries:
 
-| Format | Binaire requis |
+| Format | Required binary |
 | --- | --- |
-| `geojson`, `shp`, `gpkg` | `ogr2ogr` (paquet `gdal-bin` sur Debian/Ubuntu) |
-| `pmtiles` | `tippecanoe` (voir [felt/tippecanoe](https://github.com/felt/tippecanoe)) |
+| `geojson`, `shp`, `gpkg` | `ogr2ogr` (package `gdal-bin` on Debian/Ubuntu) |
+| `pmtiles` | `tippecanoe` (see [felt/tippecanoe](https://github.com/felt/tippecanoe)) |
 
-Si un format géo est demandé sans le binaire correspondant, le plugin émet un log d'erreur explicite.
+If a geographic format is requested without the matching binary available, the plugin emits an explicit error log.
 
-Les formats `csv`, `parquet`, `xlsx` ne nécessitent aucun binaire externe.
+The `csv`, `parquet` and `xlsx` formats do not require any external binary.
 
 ## Configuration
 
-### Tab `Jeu de données`
+### Tab `Dataset`
 
-| Champ | Description |
+| Field | Description |
 | --- | --- |
-| `dataset` | Jeu de données source à exporter |
+| `dataset` | Source dataset to export |
 
-### Tab `Paramètres`
+### Tab `Parameters`
 
-| Champ | Description |
+| Field | Description |
 | --- | --- |
-| `fields` | Liste des colonnes à inclure (toutes les non-calculées par défaut) |
-| `format` | Un ou plusieurs formats parmi csv/parquet/xlsx/geojson/pmtiles/shp/gpkg |
-| `filename` | Nom du fichier sans extension (défaut `export`) |
-| `label` | Libellé de la pièce jointe (défaut `Export`) |
-| `filters` | Filtres optionnels (valeurs in, interval min/max, valeurs à exclure) |
+| `fields` | Columns to include (all non-calculated columns by default) |
+| `format` | One or several formats among csv/parquet/xlsx/geojson/pmtiles/shp/gpkg |
+| `filename` | Output file name without extension (default `export`) |
+| `label` | Attachment label (default `Export`) |
+| `filters` | Optional filters (restrict to values, value range, exclude values) |
 
-## Développement
+## Development
 
 ```bash
 nvm use            # Node 24
@@ -53,13 +53,13 @@ npm run lint
 npm run test
 ```
 
-Les tests sont **100% locaux** grâce à [`nock`](https://github.com/nock/nock) qui simule une instance data-fair. Les tests géo (`test-it/run-geo.test.ts`) sont automatiquement skippés si `ogr2ogr` ou `tippecanoe` ne sont pas installés.
+Tests are **100% local** thanks to [`nock`](https://github.com/nock/nock) which simulates a data-fair instance. Geographic tests (`test-it/run-geo.test.ts`) are automatically skipped when `ogr2ogr` or `tippecanoe` are missing.
 
-Pour tester contre une vraie instance, dupliquer `config/default.mjs` en `config/local-test.mjs` (gitignored) avec une vraie `dataFairUrl` + `dataFairAPIKey`.
+To run against a real instance, duplicate `config/default.mjs` as `config/local-test.mjs` (gitignored) with a real `dataFairUrl` + `dataFairAPIKey`.
 
 ## Release
 
-Les plugins sont récupérés depuis npm via le keyword `data-fair-processings-plugin`. Publier équivaut à :
+Plugins are fetched from npm through the `data-fair-processings-plugin` keyword. Publishing is:
 
 ```bash
 npm version minor

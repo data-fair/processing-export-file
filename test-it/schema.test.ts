@@ -8,9 +8,9 @@ describe('Export file — schemas', () => {
     assert.equal(pluginConfigSchema.type, 'object')
   })
 
-  it('exposes a processing config schema with tabs display', () => {
+  it('exposes a processing config schema with tabs layout', () => {
     assert.equal(processingConfigSchema.type, 'object')
-    assert.equal(processingConfigSchema['x-display'], 'tabs')
+    assert.equal(processingConfigSchema.layout, 'tabs')
     assert.ok(Array.isArray(processingConfigSchema.allOf))
   })
 
