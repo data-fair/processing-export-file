@@ -18,7 +18,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
   const { processingConfig, tmpDir, axios, log } = context as ProcessingContext<ProcessingConfig>
   const cfg: any = processingConfig
 
-  await log.step('Récupération des données')
+  await log.step('Fetching data')
 
   const dataset = (await axios(cfg.dataset.href)).data
   const geomField: GeomField | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'geometry')
@@ -81,11 +81,11 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
 
   if (needsGeo) {
     if (!dataset.bbox) {
-      await log.error('Le jeu de données n\'est pas géographique et ne peut pas être converti')
+      await log.error('The dataset is not geographic and cannot be converted to a geographic format')
       return
     }
     if (!geomField && !latLonField && (!latField || !lonField)) {
-      await log.error('Les concepts nécessaires n\'ont pas été trouvés')
+      await log.error('Required geographic concepts (geometry, latitude/longitude, or latLon) were not found')
       return
     }
     const csvPath = path.join(tmpDir, filename + '.csv')
@@ -97,19 +97,19 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     await runCommand('ogr2ogr', ['-f', 'GEOJSON', geojsonPath, vrtPath])
 
     if (formats.includes('pmtiles')) {
-      await log.info('Génération du fichier au format pmtiles')
+      await log.info('Generating pmtiles file')
       const p = path.join(tmpDir, filename + '.pmtiles')
       await runCommand('tippecanoe', ['-zg', '--projection=EPSG:4326', '--force', geomField ? '-S100' : '--drop-densest-as-needed', '-pS', '-o', p, '-l', 'default', geojsonPath])
       filePaths.push(p)
     }
     if (formats.includes('shp')) {
-      await log.info('Génération du fichier au format shp')
+      await log.info('Generating shp file')
       const p = path.join(tmpDir, filename + '.zip')
       await runCommand('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', p, geojsonPath])
       filePaths.push(p)
     }
     if (formats.includes('gpkg')) {
-      await log.info('Génération du fichier au format gpkg')
+      await log.info('Generating gpkg file')
       const p = path.join(tmpDir, filename + '.gpkg')
       await runCommand('ogr2ogr', ['-f', 'GPKG', '-skipfailures', p, geojsonPath])
       filePaths.push(p)
@@ -117,7 +117,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
   }
 
   if (shouldBeStopped) return
-  await log.step('Chargement des pièces jointes')
+  await log.step('Uploading attachments')
   for (const filePath of filePaths) {
     if (shouldBeStopped) return
     await uploadAttachment({ filePath, dataset, datasetHref: cfg.dataset.href, label, axios, log })

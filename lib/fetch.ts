@@ -26,7 +26,7 @@ export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void>
 
   let url: string | undefined = urlObj.href
 
-  await log.task('Téléchargement des données')
+  await log.task('Downloading data')
   let count = 0
 
   try {
@@ -42,7 +42,7 @@ export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void>
         }
       }
       count += data.results.length
-      await log.progress('Téléchargement des données', count, data.total)
+      await log.progress('Downloading data', count, data.total)
     }
   } finally {
     for (const writeStream of writeStreams) writeStream.end()

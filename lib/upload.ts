@@ -23,7 +23,7 @@ export async function uploadAttachment (opts: UploadOpts): Promise<void> {
   const contentLength = await getLengthAsync()
 
   const { formatBytes } = await import('@data-fair/lib-utils/format/bytes.js')
-  const taskName = `Chargement de la pièce jointe ${filename} (${formatBytes(contentLength)})`
+  const taskName = `Uploading attachment ${filename} (${formatBytes(contentLength)})`
   await log.task(taskName)
 
   const response = await axios({
@@ -38,7 +38,7 @@ export async function uploadAttachment (opts: UploadOpts): Promise<void> {
     }
   })
 
-  await log.info('Mise à jour des métadonnées')
+  await log.info('Updating metadata')
 
   const attachments = dataset.attachments ?? []
   const idx = attachments.findIndex((a: { name: string }) => a.name === filename)

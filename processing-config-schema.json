@@ -1,21 +1,33 @@
 {
-  "$id": "https://github.com/data-fair/processing-export-file/processing-config",
   "x-exports": ["types", "validate"],
   "title": "ProcessingConfig",
   "type": "object",
-  "x-display": "tabs",
+  "layout": "tabs",
   "required": ["dataset", "fields", "label", "filename"],
   "allOf": [
     {
-      "title": "Jeu de données",
+      "title": "Dataset",
+      "x-i18n-title": { "fr": "Jeu de données" },
       "properties": {
         "dataset": {
           "type": "object",
-          "title": "Jeu de donnée existant",
+          "title": "Existing dataset",
+          "x-i18n-title": { "fr": "Jeu de donnée existant" },
           "properties": {
-            "id": { "type": "string", "title": "Identifiant" },
-            "href": { "type": "string", "title": "url" },
-            "title": { "type": "string", "title": "Titre" }
+            "id": {
+              "type": "string",
+              "title": "Identifier",
+              "x-i18n-title": { "fr": "Identifiant" }
+            },
+            "href": {
+              "type": "string",
+              "title": "URL"
+            },
+            "title": {
+              "type": "string",
+              "title": "Title",
+              "x-i18n-title": { "fr": "Titre" }
+            }
           },
           "layout": {
             "getItems": {
@@ -29,11 +41,13 @@
       }
     },
     {
-      "title": "Paramètres",
+      "title": "Parameters",
+      "x-i18n-title": { "fr": "Paramètres" },
       "properties": {
         "fields": {
           "type": "array",
-          "title": "Colonnes du jeu de données",
+          "title": "Dataset columns",
+          "x-i18n-title": { "fr": "Colonnes du jeu de données" },
           "items": {
             "type": "object",
             "properties": {
@@ -53,8 +67,10 @@
         },
         "format": {
           "type": "array",
-          "title": "Format de sortie des fichiers",
-          "description": "Selectionner plusieurs format pour générer plusieurs fichiers",
+          "title": "Output file formats",
+          "x-i18n-title": { "fr": "Format de sortie des fichiers" },
+          "description": "Select multiple formats to generate multiple files",
+          "x-i18n-description": { "fr": "Selectionner plusieurs format pour générer plusieurs fichiers" },
           "layout": "select",
           "items": {
             "type": "string",
@@ -72,12 +88,14 @@
         },
         "filename": {
           "type": "string",
-          "title": "Nom du fichier (sans l'extension)",
+          "title": "File name (without extension)",
+          "x-i18n-title": { "fr": "Nom du fichier (sans l'extension)" },
           "default": "export"
         },
         "label": {
           "type": "string",
-          "title": "Libellé de la pièce jointe",
+          "title": "Attachment label",
+          "x-i18n-title": { "fr": "Libellé de la pièce jointe" },
           "default": "Export"
         },
         "filters": {
@@ -88,7 +106,8 @@
   ],
   "definitions": {
     "filters": {
-      "title": "Filtres prédéfinis",
+      "title": "Predefined filters",
+      "x-i18n-title": { "fr": "Filtres prédéfinis" },
       "type": "array",
       "items": {
         "type": "object",
@@ -98,7 +117,8 @@
         "required": ["type"],
         "oneOf": [
           {
-            "title": "Restreindre à des valeurs",
+            "title": "Restrict to values",
+            "x-i18n-title": { "fr": "Restreindre à des valeurs" },
             "required": ["field"],
             "properties": {
               "type": {
@@ -109,7 +129,8 @@
               },
               "values": {
                 "type": "array",
-                "title": "Valeurs",
+                "title": "Values",
+                "x-i18n-title": { "fr": "Valeurs" },
                 "items": {
                   "type": "string"
                 },
@@ -122,7 +143,8 @@
             }
           },
           {
-            "title": "Restreindre à un interval de valeurs",
+            "title": "Restrict to a value range",
+            "x-i18n-title": { "fr": "Restreindre à un interval de valeurs" },
             "required": ["field"],
             "properties": {
               "type": {
@@ -133,7 +155,8 @@
               },
               "minValue": {
                 "type": "string",
-                "title": "Valeur min",
+                "title": "Min value",
+                "x-i18n-title": { "fr": "Valeur min" },
                 "layout": {
                   "getItems": {
                     "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=${parent.data.field.key}&${parent.data.field.key}_gte={q}&stringify=true",
@@ -145,7 +168,8 @@
               },
               "maxValue": {
                 "type": "string",
-                "title": "Valeur max",
+                "title": "Max value",
+                "x-i18n-title": { "fr": "Valeur max" },
                 "layout": {
                   "getItems": {
                     "url": "${rootData.config.dataset.href}/values_agg?field=${parent.data.field.key}&sort=-${parent.data.field.key}&${parent.data.field.key}_lte={q}&stringify=true",
@@ -158,7 +182,8 @@
             }
           },
           {
-            "title": "Exclure des valeurs",
+            "title": "Exclude values",
+            "x-i18n-title": { "fr": "Exclure des valeurs" },
             "required": ["field"],
             "properties": {
               "type": {
@@ -169,7 +194,8 @@
               },
               "values": {
                 "type": "array",
-                "title": "Valeurs à exclure",
+                "title": "Values to exclude",
+                "x-i18n-title": { "fr": "Valeurs à exclure" },
                 "items": {
                   "type": "string"
                 },
@@ -186,7 +212,8 @@
     },
     "filterField": {
       "type": "object",
-      "title": "Colonne de filtre",
+      "title": "Filter column",
+      "x-i18n-title": { "fr": "Colonne de filtre" },
       "layout": {
         "getItems": {
           "url": "${rootData.config.dataset.href}/schema?calculated=false",
