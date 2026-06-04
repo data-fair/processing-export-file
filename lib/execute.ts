@@ -1,7 +1,9 @@
-import fs from 'node:fs/promises'
+import fs from 'node:fs'
+import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { pipeline, finished } from 'node:stream/promises'
 import type { Writable } from 'node:stream'
+import archiver from 'archiver'
 import type { RunFunction, ProcessingContext } from '@data-fair/lib-common-types/processings.js'
 import type { ProcessingConfig } from '#types/processingConfig/index.ts'
 import type { Field, GeomField } from './transforms.ts'
@@ -93,7 +95,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     if (formats.includes('geojson')) filePaths.push(geojsonPath)
 
     const vrtPath = path.join(tmpDir, filename + '.vrt')
-    await fs.writeFile(vrtPath, buildVrt({ filename, csvPath, fields, geomField, latField, lonField, latLonField }))
+    await fsp.writeFile(vrtPath, buildVrt({ filename, csvPath, fields, geomField, latField, lonField, latLonField }))
     await runCommand('ogr2ogr', ['-f', 'GEOJSON', geojsonPath, vrtPath])
 
     if (formats.includes('pmtiles')) {
@@ -104,8 +106,19 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     }
     if (formats.includes('shp')) {
       await log.info('Generating shp file')
-      const p = path.join(tmpDir, filename + '.zip')
-      await runCommand('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', p, geojsonPath])
+      const shpDir = path.join(tmpDir, filename + '_shp')
+      const p = path.join(tmpDir, filename + '.shp')
+      await runCommand('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', shpDir, geojsonPath])
+      await new Promise<void>((resolve, reject) => {
+        const output = fs.createWriteStream(p)
+        const archive = archiver('zip')
+        output.on('close', resolve)
+        output.on('error', reject)
+        archive.on('error', reject)
+        archive.pipe(output)
+        archive.directory(shpDir, false)
+        archive.finalize().catch(reject)
+      })
       filePaths.push(p)
     }
     if (formats.includes('gpkg')) {
