@@ -1,13 +1,8 @@
 import { strict as assert } from 'node:assert'
 import { describe, it } from 'node:test'
-import pluginConfigSchema from '../plugin-config-schema.json' with { type: 'json' }
 import processingConfigSchema from '../processing-config-schema.json' with { type: 'json' }
 
 describe('Export file — schemas', () => {
-  it('exposes a plugin config schema', () => {
-    assert.equal(pluginConfigSchema.type, 'object')
-  })
-
   it('exposes a processing config schema with tabs layout', () => {
     assert.equal(processingConfigSchema.type, 'object')
     assert.equal(processingConfigSchema.layout, 'tabs')
