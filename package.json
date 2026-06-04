@@ -1,7 +1,7 @@
 {
   "name": "@data-fair/processing-export-file",
-  "version": "1.0.0",
-  "description": "Export data-fair dataset lines into files (csv, parquet, xlsx, geojson, pmtiles, shp, gpkg) attached as dataset metadata.",
+  "version": "0.6.12",
+  "description": "Export data-fair dataset into files (csv, parquet, xlsx, geojson, pmtiles, shp, gpkg) attached as dataset metadata.",
   "main": "index.ts",
   "type": "module",
   "scripts": {
@@ -23,8 +23,7 @@
   "keywords": [
     "data-fair-processings-plugin"
   ],
-  "author": "",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/data-fair/processing-export-file/issues"
   },
@@ -42,7 +41,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@data-fair/lib-common-types": "^1.20.0",
+    "@data-fair/lib-common-types": "^1.20.6",
     "@data-fair/lib-processing-dev": "^0.2.0",
     "@data-fair/lib-types-builder": "^1.11.3",
     "@types/debug": "^4.1.13",
@@ -55,7 +54,6 @@
     "typescript": "^5.8.3"
   },
   "files": [
-    "plugin-config-schema.json",
     "processing-config-schema.json",
     "./lib/**/*"
   ],

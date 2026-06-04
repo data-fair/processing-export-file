@@ -59,10 +59,9 @@ To run against a real instance, duplicate `config/default.mjs` as `config/local-
 
 ## Release
 
-Plugins are fetched from npm through the `data-fair-processings-plugin` keyword. Publishing is:
+Publishing is handled automatically by CI: the plugin is pushed to the data-fair registry (`@data-fair/registry`), not to the public npm registry — there is no manual `npm publish`. A push to `main`/`master` publishes to the staging registry; pushing a `v*` tag publishes to production:
 
 ```bash
-npm version minor
-npm publish
-git push --follow-tags
+npm version minor       # version bump + v* tag
+git push --follow-tags  # CI publishes to the production registry
 ```
