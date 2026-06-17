@@ -15,8 +15,7 @@ const TMP = 'data/tmp-run-geo'
 
 const hasBinary = (cmd: string) => spawnSync('which', [cmd], { stdio: 'ignore' }).status === 0
 const hasOgr2ogr = hasBinary('ogr2ogr')
-const hasTippecanoe = hasBinary('tippecanoe')
-const skipReason = !hasOgr2ogr || !hasTippecanoe ? 'ogr2ogr/tippecanoe not installed' : undefined
+const skipReason = !hasOgr2ogr ? 'ogr2ogr not installed' : undefined
 
 describe('export-file — geo formats with nock', { skip: skipReason }, () => {
   before(() => {

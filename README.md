@@ -14,12 +14,11 @@
 
 ## System requirements
 
-Geographic formats depend on two external binaries:
+Geographic formats all rely on a single external binary:
 
 | Format | Required binary |
 | --- | --- |
-| `geojson`, `shp`, `gpkg` | `ogr2ogr` (package `gdal-bin` on Debian/Ubuntu) |
-| `pmtiles` | `tippecanoe` (see [felt/tippecanoe](https://github.com/felt/tippecanoe)) |
+| `geojson`, `shp`, `gpkg`, `pmtiles` | `ogr2ogr` (package `gdal-bin` on Debian/Ubuntu, GDAL ≥ 3.8 for `pmtiles`) |
 
 If a geographic format is requested without the matching binary available, the plugin emits an explicit error log.
 

@@ -103,7 +103,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     if (formats.includes('pmtiles')) {
       await log.info('Generating pmtiles file')
       const p = path.join(tmpDir, filename + '.pmtiles')
-      await runCommand('tippecanoe', ['-zg', '--projection=EPSG:4326', '--force', geomField ? '-S100' : '--drop-densest-as-needed', '-pS', '-o', p, '-l', 'default', geojsonPath])
+      await runCommand('ogr2ogr', ['-f', 'PMTiles', p, geojsonPath, '-nln', 'default'])
       filePaths.push(p)
     }
     if (formats.includes('shp')) {
