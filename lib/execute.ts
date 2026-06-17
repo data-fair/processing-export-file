@@ -90,6 +90,8 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
       await log.error('Required geographic concepts (geometry, latitude/longitude, or latLon) were not found')
       return
     }
+
+    await log.step('Generating files')
     const csvPath = path.join(tmpDir, filename + '.csv')
     const geojsonPath = path.join(tmpDir, filename + '.geojson')
     if (formats.includes('geojson')) filePaths.push(geojsonPath)
@@ -107,7 +109,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     if (formats.includes('shp')) {
       await log.info('Generating shp file')
       const shpDir = path.join(tmpDir, filename + '_shp')
-      const p = path.join(tmpDir, filename + '.shp')
+      const p = path.join(tmpDir, filename + '.zip')
       await runCommand('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', shpDir, geojsonPath])
       await new Promise<void>((resolve, reject) => {
         const output = fs.createWriteStream(p)
