@@ -7,6 +7,7 @@ import type { LogFunctions } from '@data-fair/lib-common-types/processings.js'
 
 export interface UploadOpts {
   filePath: string
+  format: string
   dataset: any
   datasetHref: string
   label: string
@@ -15,7 +16,7 @@ export interface UploadOpts {
 }
 
 export async function uploadAttachment (opts: UploadOpts): Promise<void> {
-  const { filePath, dataset, datasetHref, label, axios, log } = opts
+  const { filePath, format, dataset, datasetHref, label, axios, log } = opts
   const filename = path.parse(filePath).base
   const formData = new FormData()
   formData.append('attachment', fs.createReadStream(filePath), { filename })
@@ -48,7 +49,7 @@ export async function uploadAttachment (opts: UploadOpts): Promise<void> {
     {
       ...response.data,
       type: 'file',
-      title: `${label} (${filename.split('.').pop()})`
+      title: `${label} (${format})`
     }
   ]
 

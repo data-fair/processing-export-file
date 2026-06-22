@@ -46,24 +46,24 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
   }
 
   const streamPipelines: Writable[][] = []
-  const filePaths: string[] = []
+  const filePaths: { path: string, format: string }[] = []
   const filename: string = cfg.filename ?? 'export'
   const label: string = cfg.label ?? 'Export'
 
   if (formats.includes('csv') || needsGeo) {
     const p = path.join(tmpDir, filename + '.csv')
     streamPipelines.push(getCsvPipeline(p, fields))
-    if (formats.includes('csv')) filePaths.push(p)
+    if (formats.includes('csv')) filePaths.push({ path: p, format: 'csv' })
   }
   if (formats.includes('parquet')) {
     const p = path.join(tmpDir, filename + '.parquet')
     streamPipelines.push(getParquetPipeline(p, fields))
-    filePaths.push(p)
+    filePaths.push({ path: p, format: 'parquet' })
   }
   if (formats.includes('xlsx')) {
     const p = path.join(tmpDir, filename + '.xlsx')
     streamPipelines.push(getXlsxPipeline(p, fields, label))
-    filePaths.push(p)
+    filePaths.push({ path: p, format: 'xlsx' })
   }
 
   const pipelinePromises = streamPipelines.map(streams =>
@@ -94,7 +94,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     await log.step('Generating files')
     const csvPath = path.join(tmpDir, filename + '.csv')
     const geojsonPath = path.join(tmpDir, filename + '.geojson')
-    if (formats.includes('geojson')) filePaths.push(geojsonPath)
+    if (formats.includes('geojson')) filePaths.push({ path: geojsonPath, format: 'geojson' })
 
     const vrtPath = path.join(tmpDir, filename + '.vrt')
     await fsp.writeFile(vrtPath, buildVrt({ filename, csvPath, fields, geomField, latField, lonField, latLonField }))
@@ -104,7 +104,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
       await log.info('Generating pmtiles file')
       const p = path.join(tmpDir, filename + '.pmtiles')
       await runCommand('ogr2ogr', ['-f', 'PMTiles', p, geojsonPath, '-nln', 'default'])
-      filePaths.push(p)
+      filePaths.push({ path: p, format: 'pmtiles' })
     }
     if (formats.includes('shp')) {
       await log.info('Generating shp file')
@@ -121,21 +121,21 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
         archive.directory(shpDir, false)
         archive.finalize().catch(reject)
       })
-      filePaths.push(p)
+      filePaths.push({ path: p, format: 'shp' })
     }
     if (formats.includes('gpkg')) {
       await log.info('Generating gpkg file')
       const p = path.join(tmpDir, filename + '.gpkg')
       await runCommand('ogr2ogr', ['-f', 'GPKG', '-skipfailures', p, geojsonPath])
-      filePaths.push(p)
+      filePaths.push({ path: p, format: 'gpkg' })
     }
   }
 
   if (shouldBeStopped) return
   await log.step('Uploading attachments')
-  for (const filePath of filePaths) {
+  for (const { path: filePath, format } of filePaths) {
     if (shouldBeStopped) return
-    await uploadAttachment({ filePath, dataset, datasetHref: cfg.dataset.href, label, axios, log })
+    await uploadAttachment({ filePath, format, dataset, datasetHref: cfg.dataset.href, label, axios, log })
   }
 }
 
