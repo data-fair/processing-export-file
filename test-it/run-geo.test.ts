@@ -72,7 +72,7 @@ describe('export-file — geo formats with nock', { skip: skipReason }, () => {
 
     assert.ok(fs.existsSync(path.join(TMP, 'export.geojson')))
     assert.ok(fs.existsSync(path.join(TMP, 'export.pmtiles')))
-    assert.ok(fs.existsSync(path.join(TMP, 'export.zip')))
+    assert.ok(fs.existsSync(path.join(TMP, 'export-shp.zip')))
     assert.ok(fs.existsSync(path.join(TMP, 'export.gpkg')))
     assert.ok(scope.isDone())
   })

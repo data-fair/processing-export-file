@@ -109,7 +109,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     if (formats.includes('shp')) {
       await log.info('Generating shp file')
       const shpDir = path.join(tmpDir, filename + '_shp')
-      const p = path.join(tmpDir, filename + '.zip')
+      const p = path.join(tmpDir, filename + '-shp.zip')
       await runCommand('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', shpDir, geojsonPath])
       await new Promise<void>((resolve, reject) => {
         const output = fs.createWriteStream(p)
