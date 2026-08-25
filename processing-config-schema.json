@@ -69,8 +69,8 @@
           "type": "array",
           "title": "Output file formats",
           "x-i18n-title": { "fr": "Format de sortie des fichiers" },
-          "description": "Select multiple formats to generate multiple files",
-          "x-i18n-description": { "fr": "Selectionner plusieurs format pour générer plusieurs fichiers" },
+          "description": "Select multiple formats to generate multiple files. Excel cannot open a worksheet with more than 1,048,575 rows: beyond that the xlsx file is not generated.",
+          "x-i18n-description": { "fr": "Selectionner plusieurs format pour générer plusieurs fichiers. Excel ne peut pas ouvrir une feuille de plus de 1 048 575 lignes : au-delà, le fichier xlsx n'est pas généré." },
           "layout": "select",
           "items": {
             "type": "string",

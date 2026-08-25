@@ -15,15 +15,28 @@ export interface FetchAndWriteOpts {
   pageSize?: number
 }
 
-export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void> {
-  const { datasetHref, fields, filters, geomField, axios, log, writeStreams, isStopped, pageSize = 10000 } = opts
+async function buildLinesUrl (datasetHref: string, fields: Field[], filters: any[] | undefined, size: number): Promise<URL> {
   const { filters2qs } = await import('@data-fair/lib-utils/filters/index.js')
-
   const urlObj = new URL(datasetHref + '/lines')
-  urlObj.searchParams.set('size', String(pageSize))
+  urlObj.searchParams.set('size', String(size))
   if (fields.length) urlObj.searchParams.set('select', fields.map(f => f.key).join(','))
   if (filters?.length) urlObj.searchParams.set('qs', filters2qs(filters))
+  return urlObj
+}
 
+/**
+ * Number of lines the export will actually contain, filters included.
+ */
+export async function countLines (datasetHref: string, filters: any[] | undefined, axios: AxiosInstance): Promise<number> {
+  const url = await buildLinesUrl(datasetHref, [], filters, 0)
+  const { data }: { data: any } = await axios(url.href)
+  return data.total
+}
+
+export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void> {
+  const { datasetHref, fields, filters, geomField, axios, log, writeStreams, isStopped, pageSize = 10000 } = opts
+
+  const urlObj = await buildLinesUrl(datasetHref, fields, filters, pageSize)
   let url: string | undefined = urlObj.href
 
   await log.task('Downloading data')

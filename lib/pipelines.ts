@@ -36,6 +36,9 @@ export function getParquetPipeline (filePath: string, fields: Field[]): Writable
   ]
 }
 
+/** an Excel worksheet cannot hold more than 1048576 rows, header row included */
+export const xlsxMaxRows = 1048575
+
 const maxPendingChunks = 32
 const resumePendingChunks = 8
 

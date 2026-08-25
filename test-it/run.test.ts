@@ -49,6 +49,8 @@ describe('export-file — run with nock', () => {
 
     const scope = nock(DATA_FAIR)
       .get(`/api/v1/datasets/${DATASET_ID}`).reply(200, dataset)
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query((q: any) => q.size === '0')
+      .reply(200, { total: 3, results: [] })
       .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, linesPage1)
       .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, linesPage2)
       .post(`/api/v1/datasets/${DATASET_ID}/metadata-attachments`).times(3)
@@ -80,6 +82,58 @@ describe('export-file — run with nock', () => {
     assert.match(csvContent, /alice/)
     assert.match(csvContent, /carol/)
 
+    assert.ok(scope.isDone(), 'all nock scopes consumed')
+  })
+
+  it('skips the xlsx export with a warning when the dataset exceeds the Excel row limit', async () => {
+    const datasetId = 'test-huge-dataset'
+    const datasetHref = `${DATA_FAIR}/api/v1/datasets/${datasetId}`
+    const dataset = {
+      id: datasetId,
+      title: 'Huge dataset',
+      schema: [{ key: 'name', type: 'string' }],
+      attachments: [],
+      bbox: null
+    }
+
+    const scope = nock(DATA_FAIR)
+      .get(`/api/v1/datasets/${datasetId}`).reply(200, dataset)
+      .get(`/api/v1/datasets/${datasetId}/lines`).query((q: any) => q.size === '0')
+      .reply(200, { total: 2000000, results: [] })
+      .get(`/api/v1/datasets/${datasetId}/lines`).query(true)
+      .reply(200, { total: 2000000, results: [{ name: 'alice' }] })
+      .post(`/api/v1/datasets/${datasetId}/metadata-attachments`)
+      .reply(200, { name: 'export-huge.csv', size: 100 })
+      .patch(`/api/v1/datasets/${datasetId}`).reply(200, {})
+
+    const processingConfig: any = {
+      dataset: { id: datasetId, href: datasetHref, title: dataset.title },
+      fields: [{ key: 'name', type: 'string' }],
+      format: ['csv', 'xlsx'],
+      filename: 'export-huge',
+      label: 'Export'
+    }
+
+    const context = testUtils.context({
+      tmpDir: TMP,
+      processingConfig
+      // @ts-ignore ProcessingTestConfig should be optional in lib-processing-dev
+    }, config, false)
+
+    const warnings: string[] = []
+    const originalWarning = context.log.warning
+    context.log.warning = async (msg: string, extra?: any) => {
+      warnings.push(msg)
+      return originalWarning(msg, extra)
+    }
+
+    await exportFilePlugin.run(context)
+
+    assert.equal(warnings.length, 1, 'a single warning was emitted')
+    assert.match(warnings[0], /1,048,575 rows/)
+    assert.match(warnings[0], /2,000,000 rows/)
+    assert.ok(!fs.existsSync(path.join(TMP, 'export-huge.xlsx')), 'xlsx file was not produced')
+    assert.ok(fs.existsSync(path.join(TMP, 'export-huge.csv')), 'csv file was still produced')
     assert.ok(scope.isDone(), 'all nock scopes consumed')
   })
 })

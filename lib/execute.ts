@@ -7,9 +7,9 @@ import archiver from 'archiver'
 import type { RunFunction, ProcessingContext } from '@data-fair/lib-common-types/processings.js'
 import type { ProcessingConfig } from '#types/processingConfig/index.ts'
 import type { Field, GeomField } from './transforms.ts'
-import { fetchAndWriteData } from './fetch.ts'
+import { countLines, fetchAndWriteData } from './fetch.ts'
 import { uploadAttachment } from './upload.ts'
-import { getCsvPipeline, getParquetPipeline, getXlsxPipeline } from './pipelines.ts'
+import { getCsvPipeline, getParquetPipeline, getXlsxPipeline, xlsxMaxRows } from './pipelines.ts'
 import { buildVrt } from './vrt.ts'
 import { runCommand } from './spawn-process.ts'
 
@@ -32,7 +32,17 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     ? [...cfg.fields]
     : dataset.schema.filter((f: any) => !f['x-calculated'])
 
-  const formats: string[] = cfg.format ?? ['csv']
+  let formats: string[] = cfg.format ?? ['csv']
+
+  if (formats.includes('xlsx')) {
+    const total = await countLines(cfg.dataset.href, cfg.filters, axios)
+    if (total > xlsxMaxRows) {
+      await log.warning(`Excel cannot open a worksheet with more than ${xlsxMaxRows.toLocaleString('en-US')} rows and this export has ${total.toLocaleString('en-US')} rows, the xlsx file is not generated`)
+      formats = formats.filter(f => f !== 'xlsx')
+      if (!formats.length) return
+    }
+  }
+
   const needsGeo = formats.some(f => ['pmtiles', 'shp', 'gpkg', 'geojson'].includes(f))
   if (needsGeo) {
     if (latField && lonField) {
