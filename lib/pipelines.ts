@@ -36,17 +36,74 @@ export function getParquetPipeline (filePath: string, fields: Field[]): Writable
   ]
 }
 
+const maxPendingChunks = 32
+const resumePendingChunks = 8
+
+export interface XlsxBackpressure {
+  /** resolves once the zip stream has caught up enough to accept more rows */
+  wait: () => Promise<void>
+  /** unblocks every waiter, to avoid hanging when the underlying stream dies */
+  release: () => void
+}
+
+/**
+ * exceljs gives us no backpressure: StreamBuf.write() always returns true (the library even
+ * says so in a comment) and fires its 64kB buffers into the zip stream without awaiting them.
+ * Rows written faster than the zip compresses them therefore pile up off-heap, ~900MB of
+ * buffers for 1M rows. Counting the chunks still in flight lets us pause the source instead,
+ * which divides the resident memory of a 1M rows export by about 4.
+ *
+ * /!\ This wraps StreamBuf._pipe, a private member of exceljs (lib/utils/stream-buf.js).
+ * It is only ever read here and in test-it/xlsx-backpressure.test.ts, which fails if a future
+ * version of exceljs renames it — without that test the export would silently go back to
+ * buffering everything in memory. Returns undefined rather than throwing, so a broken hook
+ * degrades to the previous behaviour instead of breaking the export.
+ */
+export function hookXlsxBackpressure (worksheet: any): XlsxBackpressure | undefined {
+  const streamBuf = worksheet?.stream
+  if (typeof streamBuf?._pipe !== 'function') return undefined
+
+  const pipe = streamBuf._pipe.bind(streamBuf)
+  let pending = 0
+  let waiters: (() => void)[] = []
+  const release = () => {
+    const resuming = waiters
+    waiters = []
+    for (const resume of resuming) resume()
+  }
+
+  streamBuf._pipe = (chunk: any) => {
+    pending++
+    return pipe(chunk).finally(() => {
+      pending--
+      if (pending <= resumePendingChunks) release()
+    })
+  }
+
+  return {
+    wait: async () => {
+      if (pending <= maxPendingChunks) return
+      await new Promise<void>((resolve) => waiters.push(resolve))
+    },
+    release
+  }
+}
+
 export function getXlsxPipeline (filePath: string, fields: Field[], label: string): WritableT[] {
   const writeStreamXlsx = fs.createWriteStream(filePath, { flags: 'w' })
   const workbook = new Excel.stream.xlsx.WorkbookWriter({ stream: writeStreamXlsx })
   const worksheet = workbook.addWorksheet(label)
   worksheet.columns = fields.map(f => ({ header: f.key, key: f.key }))
 
+  const backpressure = hookXlsxBackpressure(worksheet)
+  if (backpressure) writeStreamXlsx.once('error', backpressure.release)
+
   const writable = new Writable({
     objectMode: true,
     write (line, _enc, next) {
       worksheet.addRow(line).commit()
-      next()
+      if (!backpressure) return next()
+      backpressure.wait().then(() => next(), next)
     },
     final (callback) {
       worksheet.commit()
