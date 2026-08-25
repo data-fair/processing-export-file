@@ -29,7 +29,9 @@ export function getCsvPipeline (filePath: string, fields: Field[]): WritableT[] 
 export function getParquetPipeline (filePath: string, fields: Field[]): WritableT[] {
   const schema = new ParquetSchema(buildParquetSchemaDefinition(fields) as any)
   return [
-    new ParquetTransformer(schema),
+    // the footer metadata of every row group is kept in memory until the file is closed,
+    // so the defaults (rowGroupSize 4096 + pageIndex) grow the heap linearly with the row count
+    new ParquetTransformer(schema, { rowGroupSize: 20000, pageIndex: false }),
     fs.createWriteStream(filePath, { flags: 'w' })
   ]
 }
