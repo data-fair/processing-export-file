@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/processing-export-file",
-  "version": "0.6.12",
+  "version": "0.7.0",
   "description": "Export data-fair dataset into files (csv, parquet, xlsx, geojson, pmtiles, shp, gpkg) attached as dataset metadata.",
   "main": "index.ts",
   "type": "module",
