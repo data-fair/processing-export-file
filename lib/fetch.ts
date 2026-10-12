@@ -47,6 +47,8 @@ export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void>
       if (isStopped()) return
       const { data }: { data: any } = await axios(url)
       url = data.next
+      // the next link comes from the response, only follow it on the dataset's own origin
+      if (url && new URL(url).origin !== urlObj.origin) throw new Error(`unexpected next link ${url}, it is not on the origin of the dataset ${urlObj.origin}`)
       for (const line of data.results) {
         transformLine(line, fields, geomField)
         for (const writeStream of writeStreams) {

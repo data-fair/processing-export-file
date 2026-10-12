@@ -8,6 +8,19 @@ export interface SpawnResult {
   stderr: string
 }
 
+// Run GDAL in a controlled environment, without the secrets and settings of the worker
+const ogrEnvKeys = ['PATH', 'HOME', 'TMPDIR', 'LANG', 'LC_ALL', 'TZ', 'LD_LIBRARY_PATH']
+const ogrEnvPrefixes = ['GDAL_', 'CPL_', 'OGR_', 'PROJ_']
+
+export const getOgrEnv = (env: NodeJS.ProcessEnv = process.env): Record<string, string> => {
+  const ogrEnv: Record<string, string> = {}
+  for (const [key, value] of Object.entries(env)) {
+    if (value === undefined) continue
+    if (ogrEnvKeys.includes(key) || ogrEnvPrefixes.some(prefix => key.startsWith(prefix))) ogrEnv[key] = value
+  }
+  return ogrEnv
+}
+
 export async function runCommand (cmd: string, args: string[], options: SpawnOptions = {}): Promise<SpawnResult> {
   debug(`${cmd} ${args.join(' ')}`)
   return await new Promise<SpawnResult>((resolve, reject) => {

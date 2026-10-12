@@ -11,9 +11,14 @@ import { countLines, fetchAndWriteData } from './fetch.ts'
 import { uploadAttachment } from './upload.ts'
 import { getCsvPipeline, getParquetPipeline, getXlsxPipeline, xlsxMaxRows } from './pipelines.ts'
 import { buildVrt } from './vrt.ts'
-import { runCommand } from './spawn-process.ts'
+import { runCommand, getOgrEnv } from './spawn-process.ts'
 
 let shouldBeStopped = false
+
+export const safeFilename = (filename: string | undefined): string => {
+  const base = path.basename(filename ?? '')
+  return (base && base !== '.' && base !== '..') ? base : 'export'
+}
 
 export const run: RunFunction<ProcessingConfig> = async (context) => {
   shouldBeStopped = false
@@ -57,7 +62,8 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
 
   const streamPipelines: Writable[][] = []
   const filePaths: { path: string, format: string }[] = []
-  const filename: string = cfg.filename ?? 'export'
+  // the file name is chosen by the user, it must not move the files out of tmpDir
+  const filename: string = safeFilename(cfg.filename)
   const label: string = cfg.label ?? 'Export'
 
   if (formats.includes('csv') || needsGeo) {
@@ -108,19 +114,19 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
 
     const vrtPath = path.join(tmpDir, filename + '.vrt')
     await fsp.writeFile(vrtPath, buildVrt({ filename, csvPath, fields, geomField, latField, lonField, latLonField }))
-    await runCommand('ogr2ogr', ['-f', 'GEOJSON', geojsonPath, vrtPath])
+    await runCommand('ogr2ogr', ['-if', 'OGR_VRT', '-f', 'GEOJSON', geojsonPath, vrtPath], { env: getOgrEnv() })
 
     if (formats.includes('pmtiles')) {
       await log.info('Generating pmtiles file')
       const p = path.join(tmpDir, filename + '.pmtiles')
-      await runCommand('ogr2ogr', ['-f', 'PMTiles', p, geojsonPath, '-nln', 'default'])
+      await runCommand('ogr2ogr', ['-if', 'GeoJSON', '-f', 'PMTiles', p, geojsonPath, '-nln', 'default'], { env: getOgrEnv() })
       filePaths.push({ path: p, format: 'pmtiles' })
     }
     if (formats.includes('shp')) {
       await log.info('Generating shp file')
       const shpDir = path.join(tmpDir, filename + '_shp')
       const p = path.join(tmpDir, filename + '-shp.zip')
-      await runCommand('ogr2ogr', ['-f', 'ESRI Shapefile', '-skipfailures', shpDir, geojsonPath])
+      await runCommand('ogr2ogr', ['-if', 'GeoJSON', '-f', 'ESRI Shapefile', '-skipfailures', shpDir, geojsonPath], { env: getOgrEnv() })
       await new Promise<void>((resolve, reject) => {
         const output = fs.createWriteStream(p)
         const archive = archiver('zip')
@@ -136,7 +142,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     if (formats.includes('gpkg')) {
       await log.info('Generating gpkg file')
       const p = path.join(tmpDir, filename + '.gpkg')
-      await runCommand('ogr2ogr', ['-f', 'GPKG', '-skipfailures', p, geojsonPath])
+      await runCommand('ogr2ogr', ['-if', 'GeoJSON', '-f', 'GPKG', '-skipfailures', p, geojsonPath], { env: getOgrEnv() })
       filePaths.push({ path: p, format: 'gpkg' })
     }
   }
