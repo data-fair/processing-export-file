@@ -54,7 +54,7 @@ describe('export-file — run with nock', () => {
       .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, linesPage1)
       .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, linesPage2)
       .post(`/api/v1/datasets/${DATASET_ID}/metadata-attachments`).times(3)
-      .reply(200, (_uri, _body) => ({ name: 'export.csv', size: 100 }))
+      .reply(200, () => ({ name: 'export.csv', size: 100 }))
       .patch(`/api/v1/datasets/${DATASET_ID}`).times(3).reply(200, {})
 
     const processingConfig: any = {

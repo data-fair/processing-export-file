@@ -3,7 +3,7 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { pipeline, finished } from 'node:stream/promises'
 import type { Writable } from 'node:stream'
-import archiver from 'archiver'
+import { ZipArchive } from 'archiver'
 import type { RunFunction, ProcessingContext } from '@data-fair/lib-common-types/processings.js'
 import type { ProcessingConfig } from '#types/processingConfig/index.ts'
 import type { Field, GeomField } from './transforms.ts'
@@ -129,7 +129,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
       await runCommand('ogr2ogr', ['-if', 'GeoJSON', '-f', 'ESRI Shapefile', '-skipfailures', shpDir, geojsonPath], { env: getOgrEnv() })
       await new Promise<void>((resolve, reject) => {
         const output = fs.createWriteStream(p)
-        const archive = archiver('zip')
+        const archive = new ZipArchive()
         output.on('close', resolve)
         output.on('error', reject)
         archive.on('error', reject)

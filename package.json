@@ -31,7 +31,7 @@
   "dependencies": {
     "@data-fair/lib-utils": "^1.10.1",
     "@dsnp/parquetjs": "^1.5.0",
-    "archiver": "^7.0.1",
+    "archiver": "^8.0.0",
     "csv-stringify": "^6.4.5",
     "debug": "^4.4.0",
     "exceljs": "^4.4.0",
@@ -39,18 +39,19 @@
     "wkt": "^0.1.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@data-fair/lib-common-types": "^1.20.6",
-    "@data-fair/lib-processing-dev": "^0.2.0",
+    "@data-fair/lib-processing-dev": "^0.3.0",
     "@data-fair/lib-types-builder": "^1.11.3",
     "@types/debug": "^4.1.13",
-    "@types/node": "^22",
-    "config": "^4.4.1",
+    "@types/node": "^24.19.2",
+    "axios": "^1.21.1",
+    "config": "^5.0.1",
     "eslint": "^9.26.0",
     "husky": "^9.1.7",
     "neostandard": "^0.12.1",
-    "nock": "^14.0.0",
+    "nock": "^15.0.6",
     "typescript": "^5.8.3"
   },
   "files": [
