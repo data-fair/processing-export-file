@@ -1,11 +1,10 @@
-import type { RunFunction } from '@data-fair/lib-common-types/processings.js'
+import type { PrepareFunction, RunFunction } from '@data-fair/lib-common-types/processings.js'
 import type { ProcessingConfig } from './types/processingConfig/index.ts'
 
-// Not necessary for this processing
-// export const prepare: PrepareFunction<ProcessingConfig> = async (context) => {
-//   const prepare = (await import('./lib/prepare.ts')).default
-//   return prepare(context)
-// }
+export const prepare: PrepareFunction<ProcessingConfig> = async (context) => {
+  const prepare = (await import('./lib/prepare.ts')).default
+  return prepare(context)
+}
 
 export const run: RunFunction<ProcessingConfig> = async (context) => {
   const { run } = await import('./lib/execute.ts')

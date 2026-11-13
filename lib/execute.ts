@@ -4,7 +4,7 @@ import path from 'node:path'
 import { pipeline, finished } from 'node:stream/promises'
 import type { Writable } from 'node:stream'
 import { ZipArchive } from 'archiver'
-import type { RunFunction, ProcessingContext } from '@data-fair/lib-common-types/processings.js'
+import type { LogFunctions, RunFunction } from '@data-fair/lib-common-types/processings.js'
 import type { ProcessingConfig } from '#types/processingConfig/index.ts'
 import type { Field, GeomField } from './transforms.ts'
 import { countLines, fetchAndWriteData } from './fetch.ts'
@@ -22,25 +22,27 @@ export const safeFilename = (filename: string | undefined): string => {
 
 export const run: RunFunction<ProcessingConfig> = async (context) => {
   shouldBeStopped = false
-  const { processingConfig, tmpDir, axios, log } = context as ProcessingContext<ProcessingConfig>
-  const cfg: any = processingConfig
+  const { processingConfig, tmpDir, axios, log } = context
+  const datasetHref = processingConfig.dataset?.href
+  if (!datasetHref) throw new Error('No dataset is selected in the processing configuration')
+  const filters = processingConfig.filters as any[] | undefined
 
   await log.step('Fetching data')
 
-  const dataset = (await axios(cfg.dataset.href)).data
+  const dataset = (await axios(datasetHref)).data
   const geomField: GeomField | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'geometry')
   const latField: Field | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'latitude')
   const lonField: Field | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'longitude')
   const latLonField: Field | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'latLon')
 
-  const fields: Field[] = Array.isArray(cfg.fields) && cfg.fields.length
-    ? [...cfg.fields]
+  const fields: Field[] = Array.isArray(processingConfig.fields) && processingConfig.fields.length
+    ? [...processingConfig.fields as Field[]]
     : dataset.schema.filter((f: any) => !f['x-calculated'])
 
-  let formats: string[] = cfg.format ?? ['csv']
+  let formats: string[] = processingConfig.format ?? ['csv']
 
   if (formats.includes('xlsx')) {
-    const total = await countLines(cfg.dataset.href, cfg.filters, axios)
+    const total = await countLines(datasetHref, filters, axios)
     if (total > xlsxMaxRows) {
       await log.warning(`Excel cannot open a worksheet with more than ${xlsxMaxRows.toLocaleString('en-US')} rows and this export has ${total.toLocaleString('en-US')} rows, the xlsx file is not generated`)
       formats = formats.filter(f => f !== 'xlsx')
@@ -63,8 +65,8 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
   const streamPipelines: Writable[][] = []
   const filePaths: { path: string, format: string }[] = []
   // the file name is chosen by the user, it must not move the files out of tmpDir
-  const filename: string = safeFilename(cfg.filename)
-  const label: string = cfg.label ?? 'Export'
+  const filename: string = safeFilename(processingConfig.filename)
+  const label: string = processingConfig.label ?? 'Export'
 
   if (formats.includes('csv') || needsGeo) {
     const p = path.join(tmpDir, filename + '.csv')
@@ -86,9 +88,9 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     streams.length > 1 ? pipeline(streams) : finished(streams[0])
   )
   pipelinePromises.push(fetchAndWriteData({
-    datasetHref: cfg.dataset.href,
+    datasetHref,
     fields,
-    filters: cfg.filters,
+    filters,
     geomField,
     axios,
     log,
@@ -96,6 +98,9 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     isStopped: () => shouldBeStopped
   }))
   await Promise.all(pipelinePromises)
+
+  // the files written so far are truncated, they must never be uploaded
+  if (shouldBeStopped) return await logStopped(log)
 
   if (needsGeo) {
     if (!dataset.bbox) {
@@ -147,12 +152,16 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
     }
   }
 
-  if (shouldBeStopped) return
+  if (shouldBeStopped) return await logStopped(log)
   await log.step('Uploading attachments')
   for (const { path: filePath, format } of filePaths) {
-    if (shouldBeStopped) return
-    await uploadAttachment({ filePath, format, dataset, datasetHref: cfg.dataset.href, label, axios, log })
+    if (shouldBeStopped) return await logStopped(log)
+    await uploadAttachment({ filePath, format, dataset, datasetHref, label, axios, log })
   }
+}
+
+const logStopped = async (log: LogFunctions) => {
+  await log.warning('The processing was stopped, the remaining files are not uploaded')
 }
 
 export const stop: () => Promise<void> = async () => { shouldBeStopped = true }
