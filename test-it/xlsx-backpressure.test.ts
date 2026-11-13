@@ -68,10 +68,10 @@ describe('export-file — xlsx backpressure', () => {
     writable.end()
     await done
 
-    let lastRow = 0
-    for await (const worksheet of new Excel.stream.xlsx.WorkbookReader(filePath, {})) {
-      for await (const row of worksheet) lastRow = row.number
-    }
-    assert.equal(lastRow, 20001, 'header + 20000 rows were written')
+    // not the streaming WorkbookReader: it buffers the worksheets in a tmp file of the os temp
+    // directory that the forced exit of the test runner leaves behind
+    const workbook = new Excel.Workbook()
+    await workbook.xlsx.readFile(filePath)
+    assert.equal(workbook.worksheets[0].rowCount, 20001, 'header + 20000 rows were written')
   })
 })
