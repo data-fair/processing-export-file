@@ -12,7 +12,7 @@
         "dataset": {
           "type": "object",
           "title": "Existing dataset",
-          "x-i18n-title": { "fr": "Jeu de donnée existant" },
+          "x-i18n-title": { "fr": "Jeu de données existant" },
           "properties": {
             "id": {
               "type": "string",
@@ -21,7 +21,8 @@
             },
             "href": {
               "type": "string",
-              "title": "URL"
+              "title": "URL",
+              "x-i18n-title": { "fr": "URL" }
             },
             "title": {
               "type": "string",
@@ -31,7 +32,8 @@
           },
           "layout": {
             "getItems": {
-              "url": "${context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&${context.ownerFilter}",
+              "url": "${context.dataFairUrl}/api/v1/datasets?select=id,title&size=50&${context.ownerFilter}",
+              "qSearchParam": "q",
               "itemsResults": "data.results",
               "itemTitle": "item.title",
               "itemKey": "item.id"
@@ -48,6 +50,8 @@
           "type": "array",
           "title": "Dataset columns",
           "x-i18n-title": { "fr": "Colonnes du jeu de données" },
+          "description": "Leave empty to export every column of the dataset except the calculated ones.",
+          "x-i18n-description": { "fr": "Laisser vide pour exporter toutes les colonnes du jeu de données, sauf les colonnes calculées." },
           "items": {
             "type": "object",
             "properties": {
@@ -57,10 +61,12 @@
             }
           },
           "layout": {
+            "comp": "autocomplete",
             "getItems": {
               "url": "${rootData.config.dataset.href}/schema?calculated=false",
               "itemTitle": "item.label",
-              "itemKey": "item.key"
+              "itemKey": "item.key",
+              "itemIcon": "null"
             }
           },
           "default": []
@@ -70,7 +76,7 @@
           "title": "Output file formats",
           "x-i18n-title": { "fr": "Format de sortie des fichiers" },
           "description": "Select multiple formats to generate multiple files. Excel cannot open a worksheet with more than 1,048,575 rows: beyond that the xlsx file is not generated.",
-          "x-i18n-description": { "fr": "Selectionner plusieurs format pour générer plusieurs fichiers. Excel ne peut pas ouvrir une feuille de plus de 1 048 575 lignes : au-delà, le fichier xlsx n'est pas généré." },
+          "x-i18n-description": { "fr": "Sélectionner plusieurs formats pour générer plusieurs fichiers. Excel ne peut pas ouvrir une feuille de plus de 1 048 575 lignes : au-delà, le fichier xlsx n'est pas généré." },
           "layout": "select",
           "items": {
             "type": "string",
@@ -96,6 +102,8 @@
           "type": "string",
           "title": "Attachment label",
           "x-i18n-title": { "fr": "Libellé de la pièce jointe" },
+          "description": "Title given to each attachment, followed by its format in parentheses, e.g. \"Export (csv)\".",
+          "x-i18n-description": { "fr": "Titre donné à chaque pièce jointe, suivi de son format entre parenthèses, par exemple « Export (csv) »." },
           "default": "Export"
         },
         "filters": {
@@ -113,6 +121,10 @@
         "type": "object",
         "default": {
           "type": "in"
+        },
+        "oneOfLayout": {
+          "label": "Filter type",
+          "x-i18n-label": { "fr": "Type de filtre" }
         },
         "required": ["type"],
         "oneOf": [
@@ -136,7 +148,8 @@
                 },
                 "layout": {
                   "getItems": {
-                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q_mode=complete&size=100&stringify=true",
+                    "qSearchParam": "q"
                   }
                 }
               }
@@ -144,7 +157,7 @@
           },
           {
             "title": "Restrict to a value range",
-            "x-i18n-title": { "fr": "Restreindre à un interval de valeurs" },
+            "x-i18n-title": { "fr": "Restreindre à un intervalle de valeurs" },
             "required": ["field"],
             "properties": {
               "type": {
@@ -201,7 +214,8 @@
                 },
                 "layout": {
                   "getItems": {
-                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q={q}&q_mode=complete&size=100&stringify=true"
+                    "url": "${rootData.config.dataset.href}/values/${parent.data.field.key}?q_mode=complete&size=100&stringify=true",
+                    "qSearchParam": "q"
                   }
                 }
               }
@@ -215,10 +229,12 @@
       "title": "Filter column",
       "x-i18n-title": { "fr": "Colonne de filtre" },
       "layout": {
+        "comp": "autocomplete",
         "getItems": {
           "url": "${rootData.config.dataset.href}/schema?calculated=false",
           "itemTitle": "item.label",
-          "itemKey": "item.key"
+          "itemKey": "item.key",
+          "itemIcon": "null"
         }
       }
     }
