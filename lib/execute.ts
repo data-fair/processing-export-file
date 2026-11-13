@@ -53,6 +53,15 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
 
   const needsGeo = formats.some(f => ['pmtiles', 'shp', 'gpkg', 'geojson'].includes(f))
   if (needsGeo) {
+    // checked before downloading anything: the run would end without uploading a file
+    if (!dataset.bbox) {
+      await log.error('The dataset is not geographic and cannot be converted to a geographic format')
+      return
+    }
+    if (!geomField && !latLonField && (!latField || !lonField)) {
+      await log.error('Geographic formats need a column with the geometry concept, the latLon concept, or both latitude and longitude concepts, and the dataset has none')
+      return
+    }
     if (latField && lonField) {
       if (!fields.find(f => f.key === latField.key)) fields.push(latField)
       if (!fields.find(f => f.key === lonField.key)) fields.push(lonField)
@@ -104,15 +113,6 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
   if (shouldBeStopped) return await logStopped(log)
 
   if (needsGeo) {
-    if (!dataset.bbox) {
-      await log.error('The dataset is not geographic and cannot be converted to a geographic format')
-      return
-    }
-    if (!geomField && !latLonField && (!latField || !lonField)) {
-      await log.error('Geographic formats need a column with the geometry concept, the latLon concept, or both latitude and longitude concepts, and the dataset has none')
-      return
-    }
-
     await log.step('Generating the geographic files')
     const csvPath = path.join(tmpDir, filename + '.csv')
     const geojsonPath = path.join(tmpDir, filename + '.geojson')

@@ -136,4 +136,27 @@ describe('export-file — run with nock', () => {
     assert.ok(fs.existsSync(path.join(TMP, 'export-huge.csv')), 'csv file was still produced')
     assert.ok(scope.isDone(), 'all nock scopes consumed')
   })
+
+  it('refuses a geographic format on a non geographic dataset before downloading it', async () => {
+    const datasetId = 'test-not-geo-dataset'
+    const datasetHref = `${DATA_FAIR}/api/v1/datasets/${datasetId}`
+    const dataset = { id: datasetId, title: 'Not geo', schema: [{ key: 'name', type: 'string' }], attachments: [], bbox: null }
+
+    // no lines route: requesting the lines would fail the test
+    const scope = nock(DATA_FAIR).get(`/api/v1/datasets/${datasetId}`).reply(200, dataset)
+
+    const context = testUtils.context({
+      tmpDir: TMP,
+      processingConfig: { dataset: { id: datasetId, href: datasetHref, title: dataset.title }, fields: [], format: ['csv', 'geojson'], filename: 'export-not-geo', label: 'Export' }
+      // @ts-ignore ProcessingTestConfig should be optional in lib-processing-dev
+    }, config, false)
+    const errors: string[] = []
+    context.log.error = async (msg: string) => { errors.push(msg) }
+
+    await exportFilePlugin.run(context)
+
+    assert.match(errors[0], /not geographic/)
+    assert.ok(!fs.existsSync(path.join(TMP, 'export-not-geo.csv')), 'nothing was written')
+    assert.ok(scope.isDone(), 'all nock scopes consumed')
+  })
 })
