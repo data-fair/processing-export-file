@@ -36,7 +36,7 @@ export async function runCommand (cmd: string, args: string[], options: SpawnOpt
       debug('stdout', stdout)
       debug('stderr', stderr)
       if (code === 0) resolve({ stdout, stderr })
-      else reject(new Error(stderr || `${cmd} exited with code ${code}`))
+      else reject(new Error(`${cmd} exited with code ${code}${stderr.trim() ? `: ${stderr.trim()}` : ''}`))
     })
   })
 }

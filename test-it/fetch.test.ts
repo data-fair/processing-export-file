@@ -22,7 +22,7 @@ describe('fetchAndWriteData', () => {
       log,
       writeStreams: [writeStream],
       isStopped: () => false
-    }), /unexpected next link/)
+    }), /next page link .* is not on the origin of the dataset/)
     assert.equal(urls.length, 1)
   })
 })

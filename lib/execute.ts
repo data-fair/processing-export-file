@@ -30,6 +30,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
   await log.step('Fetching data')
 
   const dataset = (await axios(datasetHref)).data
+  await log.info(`Exporting the dataset ${dataset.title} (${dataset.id})`)
   const geomField: GeomField | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'geometry')
   const latField: Field | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'latitude')
   const lonField: Field | undefined = dataset.schema.find((f: any) => f['x-concept']?.id === 'longitude')
@@ -108,27 +109,28 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
       return
     }
     if (!geomField && !latLonField && (!latField || !lonField)) {
-      await log.error('Required geographic concepts (geometry, latitude/longitude, or latLon) were not found')
+      await log.error('Geographic formats need a column with the geometry concept, the latLon concept, or both latitude and longitude concepts, and the dataset has none')
       return
     }
 
-    await log.step('Generating files')
+    await log.step('Generating the geographic files')
     const csvPath = path.join(tmpDir, filename + '.csv')
     const geojsonPath = path.join(tmpDir, filename + '.geojson')
     if (formats.includes('geojson')) filePaths.push({ path: geojsonPath, format: 'geojson' })
 
     const vrtPath = path.join(tmpDir, filename + '.vrt')
+    await log.info('Generating the GeoJSON file')
     await fsp.writeFile(vrtPath, buildVrt({ filename, csvPath, fields, geomField, latField, lonField, latLonField }))
     await runCommand('ogr2ogr', ['-if', 'OGR_VRT', '-f', 'GEOJSON', geojsonPath, vrtPath], { env: getOgrEnv() })
 
     if (formats.includes('pmtiles')) {
-      await log.info('Generating pmtiles file')
+      await log.info('Generating the PMTiles file')
       const p = path.join(tmpDir, filename + '.pmtiles')
       await runCommand('ogr2ogr', ['-if', 'GeoJSON', '-f', 'PMTiles', p, geojsonPath, '-nln', 'default'], { env: getOgrEnv() })
       filePaths.push({ path: p, format: 'pmtiles' })
     }
     if (formats.includes('shp')) {
-      await log.info('Generating shp file')
+      await log.info('Generating the zipped shapefile')
       const shpDir = path.join(tmpDir, filename + '_shp')
       const p = path.join(tmpDir, filename + '-shp.zip')
       await runCommand('ogr2ogr', ['-if', 'GeoJSON', '-f', 'ESRI Shapefile', '-skipfailures', shpDir, geojsonPath], { env: getOgrEnv() })
@@ -145,7 +147,7 @@ export const run: RunFunction<ProcessingConfig> = async (context) => {
       filePaths.push({ path: p, format: 'shp' })
     }
     if (formats.includes('gpkg')) {
-      await log.info('Generating gpkg file')
+      await log.info('Generating the GeoPackage file')
       const p = path.join(tmpDir, filename + '.gpkg')
       await runCommand('ogr2ogr', ['-if', 'GeoJSON', '-f', 'GPKG', '-skipfailures', p, geojsonPath], { env: getOgrEnv() })
       filePaths.push({ path: p, format: 'gpkg' })

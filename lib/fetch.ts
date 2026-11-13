@@ -39,7 +39,7 @@ export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void>
   const urlObj = await buildLinesUrl(datasetHref, fields, filters, pageSize)
   let url: string | undefined = urlObj.href
 
-  await log.task('Downloading data')
+  await log.task('Downloading the dataset lines')
   let count = 0
 
   try {
@@ -48,7 +48,7 @@ export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void>
       const { data }: { data: any } = await axios(url)
       url = data.next
       // the next link comes from the response, only follow it on the dataset's own origin
-      if (url && new URL(url).origin !== urlObj.origin) throw new Error(`unexpected next link ${url}, it is not on the origin of the dataset ${urlObj.origin}`)
+      if (url && new URL(url).origin !== urlObj.origin) throw new Error(`The next page link ${url} is not on the origin of the dataset (${urlObj.origin}), it is not followed`)
       for (const line of data.results) {
         transformLine(line, fields, geomField)
         for (const writeStream of writeStreams) {
@@ -57,7 +57,7 @@ export async function fetchAndWriteData (opts: FetchAndWriteOpts): Promise<void>
         }
       }
       count += data.results.length
-      await log.progress('Downloading data', count, data.total)
+      await log.progress('Downloading the dataset lines', count, data.total)
     }
   } finally {
     for (const writeStream of writeStreams) writeStream.end()
