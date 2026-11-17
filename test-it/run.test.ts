@@ -6,6 +6,7 @@ import config from 'config'
 import nock from 'nock'
 import testUtils from '@data-fair/lib-processing-dev/tests-utils.js'
 import * as exportFilePlugin from '../index.ts'
+import { isPage, linesPage } from './lines-mock.ts'
 
 const DATA_FAIR = 'http://test.data-fair.local'
 const DATASET_ID = 'test-dataset'
@@ -49,10 +50,11 @@ describe('export-file — run with nock', () => {
 
     const scope = nock(DATA_FAIR)
       .get(`/api/v1/datasets/${DATASET_ID}`).reply(200, dataset)
-      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query((q: any) => q.size === '0')
+      // counted once for the xlsx row limit, once for the progress of the CSV transport
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query((q: any) => q.size === '0').times(2)
       .reply(200, { total: 3, results: [] })
-      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, linesPage1)
-      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, linesPage2)
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(isPage).reply(linesPage(linesPage1))
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(isPage).reply(linesPage(linesPage2))
       .post(`/api/v1/datasets/${DATASET_ID}/metadata-attachments`).times(3)
       .reply(200, () => ({ name: 'export.csv', size: 100 }))
       .patch(`/api/v1/datasets/${DATASET_ID}`).times(3).reply(200, {})
@@ -98,10 +100,10 @@ describe('export-file — run with nock', () => {
 
     const scope = nock(DATA_FAIR)
       .get(`/api/v1/datasets/${datasetId}`).reply(200, dataset)
-      .get(`/api/v1/datasets/${datasetId}/lines`).query((q: any) => q.size === '0')
+      .get(`/api/v1/datasets/${datasetId}/lines`).query((q: any) => q.size === '0').times(2)
       .reply(200, { total: 2000000, results: [] })
-      .get(`/api/v1/datasets/${datasetId}/lines`).query(true)
-      .reply(200, { total: 2000000, results: [{ name: 'alice' }] })
+      .get(`/api/v1/datasets/${datasetId}/lines`).query(isPage)
+      .reply(linesPage({ total: 2000000, results: [{ name: 'alice' }] }))
       .post(`/api/v1/datasets/${datasetId}/metadata-attachments`)
       .reply(200, { name: 'export-huge.csv', size: 100 })
       .patch(`/api/v1/datasets/${datasetId}`).reply(200, {})

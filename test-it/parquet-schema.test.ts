@@ -11,10 +11,10 @@ describe('buildParquetSchemaDefinition', () => {
       { key: 'd', type: 'boolean' }
     ])
     assert.deepEqual(schema, {
-      a: { type: 'INT64', optional: true },
-      b: { type: 'FLOAT', optional: true },
-      c: { type: 'UTF8', optional: true },
-      d: { type: 'BOOLEAN', optional: true }
+      a: { type: 'INT64', optional: true, compression: 'ZSTD' },
+      b: { type: 'FLOAT', optional: true, compression: 'ZSTD' },
+      c: { type: 'UTF8', optional: true, compression: 'ZSTD' },
+      d: { type: 'BOOLEAN', optional: true, compression: 'ZSTD' }
     })
   })
 })

@@ -5,6 +5,7 @@ import config from 'config'
 import nock from 'nock'
 import testUtils from '@data-fair/lib-processing-dev/tests-utils.js'
 import * as exportFilePlugin from '../index.ts'
+import { isPage, linesPage } from './lines-mock.ts'
 
 const DATA_FAIR = 'http://test.data-fair.local'
 const DATASET_ID = 'test-stop-dataset'
@@ -39,10 +40,11 @@ describe('export-file — graceful stop', () => {
 
     nock(DATA_FAIR)
       .get(`/api/v1/datasets/${DATASET_ID}`).reply(200, dataset)
-      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, linesPage1)
-      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).delay(500).reply(200, {
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query((q: any) => q.size === '0').reply(200, { total: 10, results: [] })
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(isPage).reply(linesPage(linesPage1))
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(isPage).delay(500).reply(linesPage({
         total: 10, results: [{ name: 'b' }]
-      })
+      }))
       .post(`/api/v1/datasets/${DATASET_ID}/metadata-attachments`).reply(200, () => {
         attachmentCalled = true
         return { name: 'x', size: 1 }

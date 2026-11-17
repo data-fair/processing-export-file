@@ -9,6 +9,8 @@
 - **Column selection** — exports every non-calculated column by default, or a user-defined subset.
 - **Geographic support** — automatically detects the `latitude`, `longitude`, `geometry` or `latLon` concepts and generates geographic formats through an intermediate OGR VRT layer.
 - **Streamed pagination** — reads the dataset in pages of 10 000 lines with proper backpressure, no full in-memory buffering.
+  Pages are fetched as CSV when every exported column has a simple type (string, integer, number, boolean): data-fair throttles `/lines` on the bytes it sends and a CSV page is about 3 times smaller than JSON. Other columns (geoshape, untyped) keep the JSON transport.
+- **Compressed Parquet** — columns are compressed with ZSTD (about 5 times smaller).
 - **Attachment upload** — uploads each produced file on `/metadata-attachments` and patches the dataset attachments.
 - **Graceful stop** — aborts cleanly between two pages when the platform requests a stop.
 

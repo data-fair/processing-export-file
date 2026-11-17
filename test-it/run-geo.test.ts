@@ -7,6 +7,7 @@ import config from 'config'
 import nock from 'nock'
 import testUtils from '@data-fair/lib-processing-dev/tests-utils.js'
 import * as exportFilePlugin from '../index.ts'
+import { isPage, linesPage } from './lines-mock.ts'
 
 const DATA_FAIR = 'http://test.data-fair.local'
 const DATASET_ID = 'test-geo-dataset'
@@ -49,7 +50,8 @@ describe('export-file — geo formats with nock', { skip: skipReason }, () => {
 
     const scope = nock(DATA_FAIR)
       .get(`/api/v1/datasets/${DATASET_ID}`).reply(200, dataset)
-      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(true).reply(200, lines)
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query((q: any) => q.size === '0').reply(200, { total: 2, results: [] })
+      .get(`/api/v1/datasets/${DATASET_ID}/lines`).query(isPage).reply(linesPage(lines))
       .post(`/api/v1/datasets/${DATASET_ID}/metadata-attachments`).times(4)
       .reply(200, { name: 'export.geojson', size: 100 })
       .patch(`/api/v1/datasets/${DATASET_ID}`).times(4).reply(200, {})

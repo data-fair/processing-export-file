@@ -10,13 +10,16 @@ const typeConversion: Record<string, string> = {
 export interface ParquetFieldDef {
   type: string
   optional: true
+  compression: 'ZSTD'
 }
 
 export function buildParquetSchemaDefinition (fields: Field[]): Record<string, ParquetFieldDef> {
   const def: Record<string, ParquetFieldDef> = {}
   for (const field of fields) {
     if (!field.type) continue
-    def[field.key] = { type: typeConversion[field.type], optional: true }
+    // parquetjs writes no dictionary, uncompressed columns are ~5 times bigger. ZSTD is the native
+    // zlib codec of Node (outside the JS heap), read by pyarrow, DuckDB, Polars and Spark.
+    def[field.key] = { type: typeConversion[field.type], optional: true, compression: 'ZSTD' }
   }
   return def
 }
